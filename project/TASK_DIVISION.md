@@ -53,6 +53,20 @@ Candidate = {
 
 > 這張表就是「合併介面」。只要大家都遵守，四個人的程式碼貼在一起就能跑。
 
+### `labels.csv` 欄位（已凍結）
+
+| 欄位 | 型別 | 說明 |
+|---|---|---|
+| `file` | str | 影像檔名（不含路徑） |
+| `plate_idx` | str | 同圖第幾個車牌；單車牌固定 `0`（多車牌擴充預留） |
+| `split` | str | `main`（主要測試集）或 `external`（外部測試集，不參與調參） |
+| `text` | str | 正確車牌字串，全大寫、不含空白 |
+| `front_rear` | str | `front`（白底）或 `rear`（黃底） |
+| `difficulty` | str | `easy` / `normal` / `hard` |
+| `note` | str | 備註；`[D1-02]` 匯入時會寫入 `bbox=x,y,w,h;n_obj=n` |
+
+**單一車牌原則**：本版 `run_pipeline()` 每次只輸出一個字串。同圖多車牌只標註面積最大者，其餘視為背景。
+
 ---
 
 ## 2. 模組劃分表（認領用）
@@ -62,7 +76,7 @@ Candidate = {
 | 編號 | Notebook 段落 | 具體要做什麼 | 難度 | 依賴 | 交付物 |
 |---|---|---|---|---|---|
 | **S0** | §0 Setup | Colab 環境、`cv2/numpy/matplotlib` 確認、共用常數、`PLATE_W/H`、debug 存圖函式 `save_stage(case_name, stage, img)` | ★☆☆ | — | 可執行的 setup cell |
-| **D1** | §1 Dataset | 蒐集 30–50 張港車牌影像（手機自拍 + 網路），不同角度/光線/前後牌；建 `labels.csv`（`file, text, front_rear, difficulty, note`） | ★★☆ | — | 影像集 + `labels.csv` |
+| **D1** | §1 Dataset | 取得 40–50 張港車牌影像作 `main` 集（評分主力）、10–15 張作 `external` 集（未參與調參，證明非過擬合）；建 `labels.csv`（`file, plate_idx, split, text, front_rear, difficulty, note`） | ★★☆ | — | 影像集 + `labels.csv` |
 | **EV** | §1 Eval | 評估框架：`evaluate(localize_fn, segment_fn, rectify_fn, recognize_fn)` 輸出每階段成功率、字元準確率 (CER)、整體 plate accuracy、每張圖耗時 | ★★☆ | S0, D1, 各模組介面 | `evaluation.csv` + 一張 summary 表 |
 
 ### B. 前處理 + 車牌定位（**A 線核心，全案最難**）
