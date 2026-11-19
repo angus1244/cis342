@@ -73,7 +73,7 @@
 ### 5. 新增「目錄」cell（置於標題頁之後）
 
 - **時間**：2026-11-19
-- **Commit**：PLACEHOLDER
+- **Commit**：e76a49c
 - **修改範圍**：新增 cell 1 `## 目錄`（原 cell 1 起全部後移一位）；cell 6 `## 使用規則` 的「必須保留」清單
 - **為什麼改**：使用者要求「add the 目錄 back after the first cell」。
 - **改了什麼**：
