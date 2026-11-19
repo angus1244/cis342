@@ -1,0 +1,21 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Debug / intermediate output (regenerable)
+debug/
+
+# Dataset (add via Drive / own collection, not in git)
+data/images/
+shared/
+
+# OS
+Thumbs.db
+.DS_Store
