@@ -69,3 +69,15 @@
 - **為什麼改**：使用者指出原本的寫法「提供 `CIS341-Assignment1-Grading-AI-Disclosure.pdf`，要求依該文件表格格式改寫」不準確 —— 那份 PDF 不是要照抄的規定文件，而是**使用者提供的一份格式範例**，要求 AI 依範例做出本專案的聲明。
 - **改了什麼**：該列改寫為「提供一份 AI 使用聲明的格式範例（`CIS341-Assignment1-Grading-AI-Disclosure.pdf`），要求 AI 依該範例的表格格式製作本專案的 AI 使用聲明」；其餘欄位同步調整措辭（「範例為 PDF」「依範例的 5 欄結構」）。
 - **驗證**：`nbformat.validate()` 通過；45 cells、cell id 全唯一；`nbconvert --execute` 為 0 error cell
+
+### 5. 新增「目錄」cell（置於標題頁之後）
+
+- **時間**：2026-11-19
+- **Commit**：PLACEHOLDER
+- **修改範圍**：新增 cell 1 `## 目錄`（原 cell 1 起全部後移一位）；cell 6 `## 使用規則` 的「必須保留」清單
+- **為什麼改**：使用者要求「add the 目錄 back after the first cell」。
+- **改了什麼**：
+  - 新增 markdown 目錄，分「前置文件」（AI 使用聲明 ×2、分工、使用規則、進度）與「主體章節」（§0–§9，含模組代號、對應流程階段、負責人姓名）兩張表
+  - 負責人一律用姓名，不用 A／B 線（與 AI 聲明一致）
+  - 「使用規則」的**必須保留、不可刪除**清單加入 `## 目錄`
+- **驗證**：46 cells、cell id 全唯一、標題無重複、`nbconvert --execute` 0 error cell
