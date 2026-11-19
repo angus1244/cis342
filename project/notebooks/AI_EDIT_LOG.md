@@ -85,7 +85,7 @@
 ### 6. Colab 交付前健檢：清除本機輸出、kernel 改 python3、加中文字型偵測、補 §9 self test
 
 - **時間**：2026-11-19
-- **Commit**：PLACEHOLDER
+- **Commit**：e5f3b75
 - **修改範圍**：`metadata`；cell 12 `[S0-4]`；新增 cell 46 `--- self test: [EV-01] ---`；全檔 code cell 的 outputs
 - **為什麼改**：使用者要把 notebook 貼到 Colab 讓隊友複製開工，要求做最終檢查。健檢發現四項會影響隊友的問題。
 - **改了什麼**：
