@@ -8,7 +8,7 @@
 
 ## 紀錄規則
 
-1. **每一次 AI 修改 notebook，就新增一筆**，追加在檔案最下方（時間由舊到新）。
+1. **每一次 AI 修改 notebook，就新增一筆，插在 `## 紀錄` 區塊的最上方**（最新在上，像堆疊一樣）。
 2. 每一筆必須包含：
    - `時間`、`Commit`（該筆修改對應的 git commit hash，7 碼即可）
    - `修改範圍`：受影響的 cell 編號與標題（**改完之後**的編號）
@@ -28,7 +28,62 @@
 
 ---
 
-## 2026-11-19
+## 紀錄
+
+> 排序：**最新在最上**（堆疊）。最上面那一筆就是最後一次修改。
+> 標題前的編號是「加入的先後順序」，數字越大越新。
+
+### 6. Colab 交付前健檢：清除本機輸出、kernel 改 python3、加中文字型偵測、補 §9 self test
+
+- **時間**：2026-11-19
+- **Commit**：e5f3b75
+- **修改範圍**：`metadata`；cell 12 `[S0-4]`；新增 cell 46 `--- self test: [EV-01] ---`；全檔 code cell 的 outputs
+- **為什麼改**：使用者要把 notebook 貼到 Colab 讓隊友複製開工，要求做最終檢查。健檢發現四項會影響隊友的問題。
+- **改了什麼**：
+  1. **清除所有 code cell 的輸出與 `execution_count`** — 原本殘留的輸出含 `C:\Users\honok\Desktop\...` 本機絕對路徑，貼到 Colab 會顯示不存在於對方電腦的路徑
+  2. **`metadata.kernelspec` 由 `cis342` 改為 `python3`** — Colab 沒有 `cis342` 這個 kernel，會提示 kernel 不存在
+  3. **`[S0-4]` 加入 `use_cjk_font()` 與 `HAS_CJK_FONT`** — Colab 預設無 CJK 字型，`show()` 的中文標題會變方框；找不到字型時改印提示，不中斷執行
+  4. **補上 §9 的 self test** — 其餘 8 節都有 `self test`，只有 §9 沒有，結構不一致
+- **驗證**：47 cells、cell id 全唯一、各節 self test 齊全、`nbconvert --execute` 0 error cell；確認檔案內已無 `honok` / `Desktop` / 磁碟機路徑
+
+### 5. 新增「目錄」cell（置於標題頁之後）
+
+- **時間**：2026-11-19
+- **Commit**：e76a49c
+- **修改範圍**：新增 cell 1 `## 目錄`（原 cell 1 起全部後移一位）；cell 6 `## 使用規則` 的「必須保留」清單
+- **為什麼改**：使用者要求「add the 目錄 back after the first cell」。
+- **改了什麼**：
+  - 新增 markdown 目錄，分「前置文件」（AI 使用聲明 ×2、分工、使用規則、進度）與「主體章節」（§0–§9，含模組代號、對應流程階段、負責人姓名）兩張表
+  - 負責人一律用姓名，不用 A／B 線（與 AI 聲明一致）
+  - 「使用規則」的**必須保留、不可刪除**清單加入 `## 目錄`
+- **驗證**：46 cells、cell id 全唯一、標題無重複、`nbconvert --execute` 0 error cell
+
+### 4. AI 使用聲明：「表格格式」那一列改寫為「提供格式範例」
+
+- **時間**：2026-11-19
+- **Commit**：c426e5c
+- **修改範圍**：cell 1 `## AI 使用聲明（Ho Nok Hei）` 的第 3 個資料列
+- **為什麼改**：使用者指出原本的寫法「提供 `CIS341-Assignment1-Grading-AI-Disclosure.pdf`，要求依該文件表格格式改寫」不準確 —— 那份 PDF 不是要照抄的規定文件，而是**使用者提供的一份格式範例**，要求 AI 依範例做出本專案的聲明。
+- **改了什麼**：該列改寫為「提供一份 AI 使用聲明的格式範例（`CIS341-Assignment1-Grading-AI-Disclosure.pdf`），要求 AI 依該範例的表格格式製作本專案的 AI 使用聲明」；其餘欄位同步調整措辭（「範例為 PDF」「依範例的 5 欄結構」）。
+- **驗證**：`nbformat.validate()` 通過；45 cells、cell id 全唯一；`nbconvert --execute` 為 0 error cell
+
+### 3. 修正 AI 使用聲明重複（同一節出現兩份）
+
+- **時間**：2026-11-19
+- **Commit**：001ee7f
+- **修改範圍**：整份 notebook（45 → 47 → 45 cells）
+- **為什麼改**：前一輪改寫時新增了新版 AI 聲明 cell 卻未刪除舊版，導致 `## AI 使用聲明（Ho Nok Hei）` 與 `## AI 使用聲明（Li Chi Shing）` 各出現兩次。
+- **改了什麼**：以 markdown 第一個 `## ` 標題為 key 去重，重複者保留第一次出現的；cell 數回到 45。
+- **驗證**：cell id 全唯一（45/45）、標題無重複、`nbconvert --execute` 0 error cell
+
+### 2. 移除 AI 使用聲明中的「資料集來源評估」列
+
+- **時間**：2026-11-19
+- **Commit**：001ee7f
+- **修改範圍**：cell 1 `## AI 使用聲明（Ho Nok Hei）`
+- **為什麼改**：使用者選擇「先不寫入聲明，等資料集最終確定後再加」。
+- **改了什麼**：刪除該列（Roboflow 評估），其餘 5 列不動。
+- **驗證**：`nbformat.validate()` 通過；`nbconvert --execute` 為 0 error cell
 
 ### 1. AI 使用聲明改寫為如實紀錄（Ho Nok Hei）＋ 隊友改為空白模板
 
@@ -43,54 +98,3 @@
   - cell 2 改為空白模板（只有標題、填寫提示、空的表格骨架），並註明「本節由 Li Chi Shing 自行填寫，另一位組員請勿代填」
 - **驗證**：`nbformat.validate()` 通過；`nbconvert --execute` 為 0 error cell
 
-### 2. 移除 AI 使用聲明中的「資料集來源評估」列
-
-- **時間**：2026-11-19
-- **Commit**：001ee7f
-- **修改範圍**：cell 1 `## AI 使用聲明（Ho Nok Hei）`
-- **為什麼改**：使用者選擇「先不寫入聲明，等資料集最終確定後再加」。
-- **改了什麼**：刪除該列（Roboflow 評估），其餘 5 列不動。
-- **驗證**：`nbformat.validate()` 通過；`nbconvert --execute` 為 0 error cell
-
-### 3. 修正 AI 使用聲明重複（同一節出現兩份）
-
-- **時間**：2026-11-19
-- **Commit**：001ee7f
-- **修改範圍**：整份 notebook（45 → 47 → 45 cells）
-- **為什麼改**：前一輪改寫時新增了新版 AI 聲明 cell 卻未刪除舊版，導致 `## AI 使用聲明（Ho Nok Hei）` 與 `## AI 使用聲明（Li Chi Shing）` 各出現兩次。
-- **改了什麼**：以 markdown 第一個 `## ` 標題為 key 去重，重複者保留第一次出現的；cell 數回到 45。
-- **驗證**：cell id 全唯一（45/45）、標題無重複、`nbconvert --execute` 0 error cell
-
-### 4. AI 使用聲明：「表格格式」那一列改寫為「提供格式範例」
-
-- **時間**：2026-11-19
-- **Commit**：c426e5c
-- **修改範圍**：cell 1 `## AI 使用聲明（Ho Nok Hei）` 的第 3 個資料列
-- **為什麼改**：使用者指出原本的寫法「提供 `CIS341-Assignment1-Grading-AI-Disclosure.pdf`，要求依該文件表格格式改寫」不準確 —— 那份 PDF 不是要照抄的規定文件，而是**使用者提供的一份格式範例**，要求 AI 依範例做出本專案的聲明。
-- **改了什麼**：該列改寫為「提供一份 AI 使用聲明的格式範例（`CIS341-Assignment1-Grading-AI-Disclosure.pdf`），要求 AI 依該範例的表格格式製作本專案的 AI 使用聲明」；其餘欄位同步調整措辭（「範例為 PDF」「依範例的 5 欄結構」）。
-- **驗證**：`nbformat.validate()` 通過；45 cells、cell id 全唯一；`nbconvert --execute` 為 0 error cell
-
-### 5. 新增「目錄」cell（置於標題頁之後）
-
-- **時間**：2026-11-19
-- **Commit**：e76a49c
-- **修改範圍**：新增 cell 1 `## 目錄`（原 cell 1 起全部後移一位）；cell 6 `## 使用規則` 的「必須保留」清單
-- **為什麼改**：使用者要求「add the 目錄 back after the first cell」。
-- **改了什麼**：
-  - 新增 markdown 目錄，分「前置文件」（AI 使用聲明 ×2、分工、使用規則、進度）與「主體章節」（§0–§9，含模組代號、對應流程階段、負責人姓名）兩張表
-  - 負責人一律用姓名，不用 A／B 線（與 AI 聲明一致）
-  - 「使用規則」的**必須保留、不可刪除**清單加入 `## 目錄`
-- **驗證**：46 cells、cell id 全唯一、標題無重複、`nbconvert --execute` 0 error cell
-
-### 6. Colab 交付前健檢：清除本機輸出、kernel 改 python3、加中文字型偵測、補 §9 self test
-
-- **時間**：2026-11-19
-- **Commit**：e5f3b75
-- **修改範圍**：`metadata`；cell 12 `[S0-4]`；新增 cell 46 `--- self test: [EV-01] ---`；全檔 code cell 的 outputs
-- **為什麼改**：使用者要把 notebook 貼到 Colab 讓隊友複製開工，要求做最終檢查。健檢發現四項會影響隊友的問題。
-- **改了什麼**：
-  1. **清除所有 code cell 的輸出與 `execution_count`** — 原本殘留的輸出含 `C:\Users\honok\Desktop\...` 本機絕對路徑，貼到 Colab 會顯示不存在於對方電腦的路徑
-  2. **`metadata.kernelspec` 由 `cis342` 改為 `python3`** — Colab 沒有 `cis342` 這個 kernel，會提示 kernel 不存在
-  3. **`[S0-4]` 加入 `use_cjk_font()` 與 `HAS_CJK_FONT`** — Colab 預設無 CJK 字型，`show()` 的中文標題會變方框；找不到字型時改印提示，不中斷執行
-  4. **補上 §9 的 self test** — 其餘 8 節都有 `self test`，只有 §9 沒有，結構不一致
-- **驗證**：47 cells、cell id 全唯一、各節 self test 齊全、`nbconvert --execute` 0 error cell；確認檔案內已無 `honok` / `Desktop` / 磁碟機路徑
