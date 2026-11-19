@@ -81,3 +81,16 @@
   - 負責人一律用姓名，不用 A／B 線（與 AI 聲明一致）
   - 「使用規則」的**必須保留、不可刪除**清單加入 `## 目錄`
 - **驗證**：46 cells、cell id 全唯一、標題無重複、`nbconvert --execute` 0 error cell
+
+### 6. Colab 交付前健檢：清除本機輸出、kernel 改 python3、加中文字型偵測、補 §9 self test
+
+- **時間**：2026-11-19
+- **Commit**：PLACEHOLDER
+- **修改範圍**：`metadata`；cell 12 `[S0-4]`；新增 cell 46 `--- self test: [EV-01] ---`；全檔 code cell 的 outputs
+- **為什麼改**：使用者要把 notebook 貼到 Colab 讓隊友複製開工，要求做最終檢查。健檢發現四項會影響隊友的問題。
+- **改了什麼**：
+  1. **清除所有 code cell 的輸出與 `execution_count`** — 原本殘留的輸出含 `C:\Users\honok\Desktop\...` 本機絕對路徑，貼到 Colab 會顯示不存在於對方電腦的路徑
+  2. **`metadata.kernelspec` 由 `cis342` 改為 `python3`** — Colab 沒有 `cis342` 這個 kernel，會提示 kernel 不存在
+  3. **`[S0-4]` 加入 `use_cjk_font()` 與 `HAS_CJK_FONT`** — Colab 預設無 CJK 字型，`show()` 的中文標題會變方框；找不到字型時改印提示，不中斷執行
+  4. **補上 §9 的 self test** — 其餘 8 節都有 `self test`，只有 §9 沒有，結構不一致
+- **驗證**：47 cells、cell id 全唯一、各節 self test 齊全、`nbconvert --execute` 0 error cell；確認檔案內已無 `honok` / `Desktop` / 磁碟機路徑
