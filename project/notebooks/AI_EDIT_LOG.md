@@ -32,6 +32,27 @@
 
 **驗證**：重跑兩次皆 0 error，`labels.csv` 穩定 100 列、100 個不重複檔名，指紋同為 `bd1a4489`。
 
+## 16. 抽樣指紋鎖＋`[D1-06]` labels.csv 的 Drive 收送
+
+**為什麼改**：`labels.csv` 的 `text` 欄是「第 N 張影像的正確答案」，只對抽樣出來的那 100 張有效。
+若資料集版本或 `RANDOM_SEED` 被改動，抽到另一批影像，`text` 就會全部對錯圖片 —— 程式仍可跑，
+但 §9 的準確率從此沒有意義。同時，`labels.csv` 是人工成果、不從資料集取得，需要一個跨機器收送的管道。
+
+**摘要**：
+- `[D1-01]` 新增 `_stamp_fp()` / `_labels_fingerprint()`，指紋以 `fp=xxxxxxxx` 記在 `note` 欄
+- `[D1-02]` 抽樣後先算指紋並與 `labels.csv` 比對：不符就**拒絕重抽**並列出原因；
+  確定要換一批須顯式設 `FORCE_RESAMPLE = True`
+- `[D1-02]` 移除不在本次抽樣中的舊列時，連同 `data/images/` 的影像檔一併刪除
+  （只刪舊 `labels.csv` 有登記的，自訂測試圖不受影響）
+- 新增 `[D1-06]`：`download_labels()` 從 Drive 取回 `labels.csv`（免掛載、繼承病毒掃描警告處理），
+  `save_labels_to_drive()` 回存（Colab 寫入掛載的 Drive，未掛載則用 `files.download()`）
+- `[D1-06]` 下載後比對遠端與本機指紋，不符會警告
+- `### 資料集取得方式` 表格補上第 4 步 `[D1-06]`
+
+**驗證**：62 cells、0 error；重跑兩次 `labels.csv` 穩定 100 列、`data/images/` 100 張、
+指紋皆為 `bd1a4489`，第二次執行印出「指紋相符，重跑不會動到已填的 text」。
+
+---
 ---
 ---
 
