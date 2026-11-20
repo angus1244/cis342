@@ -22,6 +22,11 @@
 
 > 排序：**最新在最上**。標題前的編號是加入順序，數字越大越新。
 
+### 14. D1-05 改為 Drive 連結下載；以真實資料集驗證整條流程（e9158e3）
+
+- **為什麼改**：使用者要求「用連結下載，不要綁定 Google Drive 掛載」。同時取得真實資料集連結（1.02 GB，hk-fszrn v2），首次能用真資料驗證 §1。
+- **摘要**：`[D1-05]` 由「掛載 + 同步資料夾」改為「分享連結下載」，支援 `/file/d/<ID>/view`、`open?id=`、純 ID 三種輸入，自動處理大檔的病毒掃描警告頁｜`[D1-04]` 抽出 `has_coco`／`_download_stream`／`extract_coco_zip`／`_merge_into` 供兩者共用，下載改串流寫入並印進度｜修掉三個只在真資料才會出現的錯：self test 向前引用（`check_raw_dir`／`label_progress`）、`import_coco` 未建 `DATA_DIR`、車牌類別多算 Roboflow 自動產生的父類別｜`PLATE_CATEGORY='license_plate'`｜`.gitignore` 補 `data/raw`、`data/labels.csv`（1 GB 不可進 git）。
+
 ### 13. import_coco 加入類別篩選；新增 Roboflow 直連下載（1171ae6）
 
 - **為什麼改**：使用者提供 Google AI Mode 產生的下載腳本，檢查後發現兩個真問題 —— ① 腳本把 API key 寫在 notebook（要遞交給評閱者，等於交出帳號額度）② 取「前 100 張」不是隨機，100 張極可能同一場景。檢查過程另外發現**我們自己**的漏洞：`import_coco()` 只取面積最大框、不篩類別，而 B 集所在 workspace 是 `safety-helmet-detection`，很可能抓到安全帽而非車牌。
