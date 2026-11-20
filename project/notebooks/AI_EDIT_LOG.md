@@ -22,6 +22,11 @@
 
 > 排序：**最新在最上**。標題前的編號是加入順序，數字越大越新。
 
+### 13. import_coco 加入類別篩選；新增 Roboflow 直連下載（1171ae6）
+
+- **為什麼改**：使用者提供 Google AI Mode 產生的下載腳本，檢查後發現兩個真問題 —— ① 腳本把 API key 寫在 notebook（要遞交給評閱者，等於交出帳號額度）② 取「前 100 張」不是隨機，100 張極可能同一場景。檢查過程另外發現**我們自己**的漏洞：`import_coco()` 只取面積最大框、不篩類別，而 B 集所在 workspace 是 `safety-helmet-detection`，很可能抓到安全帽而非車牌。
+- **摘要**：新增 `_plate_category_ids()`，多類別時只取車牌類別，`PLATE_CATEGORY` 留空則自動判斷｜`check_raw_dir()` 加「車牌類別」欄並在猜不出時警告｜`import_coco()` 重跑保留已填的 `text`/`front_rear`/`difficulty`｜新增 `[D1-04] download_coco()` 用 Roboflow 公開直連網址下載（免 API key），解壓後壓平外層資料夾、已存在不重下｜原 Drive 版本改為 `[D1-05]` 備援｜`RAW_DIR` 從 `[D1-02]` 移到 `[S0-2]`（`[D1-04]` 比 `[D1-02]` 先執行，會 NameError）。
+
 ### 12. 新增從 Google Drive 取得資料集（8b62b3d）
 
 - **為什麼改**：最終遞交版本是 Google Colab 那份，資料集應放雲端而非下載到本機；隊友複製 notebook 也要能取得同一份資料，因此需要一個「填連結就能用」的載入 cell。
