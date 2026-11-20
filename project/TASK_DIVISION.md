@@ -76,7 +76,7 @@ Candidate = {
 | 編號 | Notebook 段落 | 具體要做什麼 | 難度 | 依賴 | 交付物 |
 |---|---|---|---|---|---|
 | **S0** | §0 Setup | Colab 環境、`cv2/numpy/matplotlib` 確認、共用常數、`PLATE_W/H`、debug 存圖函式 `save_stage(case_name, stage, img)` | ★☆☆ | — | 可執行的 setup cell |
-| **D1** | §1 Dataset | 取得 40–50 張港車牌影像作 `main` 集（評分主力）、10–15 張作 `external` 集（未參與調參，證明非過擬合）；建 `labels.csv`（`file, plate_idx, split, text, front_rear, difficulty, note`） | ★★☆ | — | 影像集 + `labels.csv` |
+| **D1** | §1 Dataset | 取得 100 張港車牌影像作 `main` 集（評分主力）、10–15 張作 `external` 集（未參與調參，證明非過擬合）；建 `labels.csv`（`file, plate_idx, split, text, front_rear, difficulty, note`） | ★★☆ | — | 影像集 + `labels.csv` |
 | **EV** | §1 Eval | 評估框架：`evaluate(localize_fn, segment_fn, rectify_fn, recognize_fn)` 輸出每階段成功率、字元準確率 (CER)、整體 plate accuracy、每張圖耗時 | ★★☆ | S0, D1, 各模組介面 | `evaluation.csv` + 一張 summary 表 |
 
 ### B. 前處理 + 車牌定位（**A 線核心，全案最難**）
