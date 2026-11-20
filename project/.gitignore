@@ -12,8 +12,11 @@ __pycache__/
 # Debug / intermediate output (regenerable)
 debug/
 
-# Dataset (add via Drive / own collection, not in git)
+# Dataset (downloaded at runtime by [D1-04] / [D1-05], never in git)
 data/images/
+data/raw/
+data/labels.csv
+data/labels.backup.csv
 shared/
 
 # OS
