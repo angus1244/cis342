@@ -22,6 +22,11 @@
 
 > 排序：**最新在最上**。標題前的編號是加入順序，數字越大越新。
 
+### 12. 新增從 Google Drive 取得資料集（8b62b3d）
+
+- **為什麼改**：最終遞交版本是 Google Colab 那份，資料集應放雲端而非下載到本機；隊友複製 notebook 也要能取得同一份資料，因此需要一個「填連結就能用」的載入 cell。
+- **摘要**：新增 `[D1-04]`（`mount_drive`／`locate_dataset_dir`／`sync_from_drive`）｜Drive 資料夾含 `raw/`、`images/`、`labels.csv` 任一即同步到工作目錄，預設不覆蓋、`force=True` 強制更新｜`labels.csv` 內容相同時略過、不同才備份後覆蓋｜`DRIVE_DATASET_DIR` 留 placeholder 待填｜本機執行自動略過掛載｜§1「資料集取得方式」改寫為評閱者／組員／無資料三種視角。
+
 ### 11. 匯入張數改為總量 100，並加入 data/raw 結構檢查（d08c51a）
 
 - **為什麼改**：使用者決定「B 集抽 100 張」使用；且 Roboflow 解壓後可能多包一層資料夾，需要先確認結構。
