@@ -1,3 +1,37 @@
+## 2026-11-21 23:10 — 合併隊友的 [OCR-01]/[OCR-02]、改用 git LFS 同步
+
+**摘要**：把隊友（shing）寄來的 §6 OCR 實作合併進 dev notebook，並修掉兩個接不上的問題。
+另外檔案同步從 rar 改為 git + Git LFS，`shared/` 的 309 張 PNG 已上 master。
+
+**合併內容**：
+- `[OCR-01]`：`norm_illum()`（形態學閉運算估背景 → 相除，消底色明暗不均）+
+  `binarize()`（中值濾波 → 光照歸一化 → OTSU INV → 極性校正 → 開運算 → mask 歸零）
+- `[OCR-02]`：自研切分 `_bands_of`（行）/`_segs_of`（字元）/`_split_char`（黏連切開），
+  EasyOCR 只負責認字；中文複核走 `cn=True` 懶載第二組模型
+
+**修掉的兩個問題**：
+
+1. **`torch` 未 import** — 原文 `gpu=torch.cuda.is_available()`，但 cell 內從沒 `import torch`。
+   在他 notebook 因為別處 import 過所以沒炸，搬過來就是 `NameError`。
+   改為包一層 `_gpu_available()`，`torch` 缺席時回 `False`。
+2. **self test 向前引用** — 我第一版 self test 用 `list_stage_stems()`，那支函式在 §8 才定義。
+   改成自己 glob 掃 `shared/stages/`。（同一個坑第二次踩，已記在教訓裡。）
+
+**本機環境**：`easyocr 1.7.2` + `torch 2.15.0+cpu` + `torchvision`。
+`pip install easyocr` 會想升級 `opencv-python`，撞到 `cv2.pyd` 被 kernel 佔用（WinError 5），
+改用 `--no-deps` 再補 `torchvision`/`ninja`/`scikit-image` 繞過。
+第一次跑 `easyocr.Reader` 下載模型被本機 SSL 憑證攔截，手動 curl 兩個 .pth 到
+`~/.EasyOCR/model/` 後正常（Colab 不會有此問題）。
+
+**量測（抽驗前 6 張，全部是 A 段 accepted）**：字串完全正確 1/6。
+其中 `LWF9219` vs GT `VF9219` 只差一字，其餘多為定位錯框或切字只剩 1 個字元。
+⚠️ 這 6 張是**依檔名排序的前 6 張**，含錯框案例，不能當 §6 準確率。
+隊友在他那份乾淨裁切圖上是 8/8。
+
+**Git LFS**：`.gitattributes` 加 `project/shared/**/*.png filter=lfs`；
+`.gitignore` 的 `shared/` 改為只忽略 `shared/bridge/`（本機訊息狀態）與 `project/shared.rar`。
+309 個 PNG 實際只產生 179 個 LFS object（mask 大量重複），共 13 MB。
+
 ## 2026-11-21 21:55 — 接通隊友 bridge、修正 A 段示範輸出污染、匯出 26 組真實校正圖
 
 **摘要**：讀取隊友（shing）2 則訊息並回覆；同時發現 A 段把 GT-bbox 示範輸出寫進
