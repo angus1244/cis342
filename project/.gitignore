@@ -17,7 +17,10 @@ data/images/
 data/raw/
 data/labels.csv
 data/labels.backup.csv
-shared/
+
+# Bridge 的本機狀態（訊息、游標）不進版控；交接用的圖與 csv 走 Git LFS
+shared/bridge/
+shared.rar
 
 # OS
 Thumbs.db
