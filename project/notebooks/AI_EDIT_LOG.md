@@ -52,6 +52,29 @@
 **驗證**：62 cells、0 error；重跑兩次 `labels.csv` 穩定 100 列、`data/images/` 100 張、
 指紋皆為 `bd1a4489`，第二次執行印出「指紋相符，重跑不會動到已填的 text」。
 
+## 17. `[PRE-01]` 前處理實作（CLAHE + 雙邊濾波 + unsharp）
+
+**為什麼改**：`[PRE-01]` 原本是原圖回傳的佔位。§3 定位要靠邊緣訊號，
+而這批資料集有大量背光、車身反光、夜間與通訊軟體壓縮的影像，不先補光照會讓
+Canny 在暗側完全抓不到車牌邊界。同時 §0 沒有任何「挑測試圖」的工具，
+各節 self test 只能靠 `TEST_IMG` 一個固定路徑，資料一換就全部略過。
+
+**摘要**：
+- `[S0-4]` 新增 `pick_sample_image(seed=0)`：優先 `TEST_IMG`，否則從 `data/images/`
+  依檔名排序取第 seed 張。各節 self test 因此能直接跑真圖。
+- `preprocess()` 管線＝光照補償 → 去噪 → 銳化，三個步驟各有旗標（供 ablation）
+- `_compensate_illumination()` 在 LAB 的 L 通道做 CLAHE（clip=2.0, grid=8×8）。
+  只動亮度不動 a/b，避免白底車牌被推藍、黃底跑色而影響正反面判斷。
+- `_denoise()` 用雙邊濾波而非高斯：高斯會把車牌邊界一起糊掉，而邊界正是 §3 要用的訊號。
+- `_sharpen()` unsharp mask，amount=0.6。
+- 契約檢查寫進 self test：尺寸、dtype 不變，並輸出對比／邊緣密度／平均 BGR 偏移
+- self test 附 ablation 表（四種組合的 std 與 edge%），報告可直接引用
+
+**驗證**：0 error。測試圖 `train_IMG_1231_JPG.rf.4427...jpg`（960×1280）
+邊緣密度 4.89% → 9.33%、對比 59.0 → 57.1、平均 BGR 偏移 [18,18,18]
+（僅分區重分配，全圖平均色不變）。目視確認車牌 `RDA-2388` 更清晰且無偏色。
+
+---
 ---
 ---
 ---
