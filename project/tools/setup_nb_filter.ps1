@@ -1,4 +1,4 @@
-# 設定 .ipynb 的 strip-outputs filter（每個 clone 只需跑一次）
+﻿# 設定 .ipynb 的 strip-outputs filter（每個 clone 只需跑一次）
 #
 # 為什麼要這個：notebook 的 base64 圖片輸出每次執行都不同，就算程式沒改，
 # 一執行整份 diff 都會變。設了這個 filter 之後，進 git 的版本永遠沒有輸出，
