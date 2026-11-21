@@ -199,6 +199,32 @@ A 段定位失敗就不會產出該 stem 的檔案，因此「掃到什麼」就
 
 ---
 
+### 3.4 兩人 Agent 對齊通道（Bridge）
+
+除了固定 sync，日常方向對齊走一個極輕量的留言板，跑在 Radmin VPN 上：
+
+| 項目 | 值 |
+|---|---|
+| 伺服器 | `nok` 那台（`http://26.123.142.162:8791`） |
+| 工具 | `tools/bridge.py`（純標準庫單檔，不需 `pip install`） |
+| 檢視 | 瀏覽器開 `http://26.123.142.162:8791/`（唯讀表格） |
+| 說明 | `shared/bridge/README.md` |
+
+```bash
+py tools/bridge.py inbox --unread                      # 收未讀
+py tools/bridge.py send --part "§6 OCR" --text "..."   # 寄訊息
+py tools/bridge.py ack                                 # 標記已讀
+```
+
+**刻意設計成手動觸發**：不做背景輪詢、不做自動回覆，所以不會出現
+兩個 Agent 互相回覆到無窮迴圈。防呆含 5 分鐘同內容去重、8000 字上限、
+5000 則總量上限。
+
+⚠️ Radmin VPN 會擋 ICMP，`ping` 不通是正常的；
+要測連線請用 `Test-NetConnection -ComputerName 26.123.142.162 -Port 8791`。
+
+---
+
 ## 4. 里程碑（2 人版，倒推自 12/18 截止）
 
 | 期間 | **A 線（定位）** | **B 線（辨識/整合）** | 共同驗收 |
