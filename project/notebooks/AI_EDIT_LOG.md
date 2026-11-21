@@ -1,3 +1,38 @@
+## 2026-11-21 17:10 — 新增 `tools/export_rectified.py`，解除 B 線（§6 OCR）阻塞
+
+**摘要**：B 線反應 `shared/rectified/` 是空的、無法開始 §6。新增匯出工具，
+用 `labels.csv` 的 GT bbox 產生符合契約的校正圖（480×140 PNG + mask），
+並補上 `shared/rectified/README.md` 與 `TASK_DIVISION.md §3.3` 的格式契約。
+
+**原因**：notebook 只在文件寫「§5 存到 `shared/rectified/`、§6 讀它」，
+**從來沒有任何寫檔的程式碼**，而 `[LOC-01]`→`[GEO-01]` 又全是 stub，
+所以那個目錄一直是空的。B 線等於在等一個不存在的交付物。
+
+**變更**：
+- 新增 `tools/export_rectified.py`：`--list` / `--limit N` / `--all` / 檔名關鍵字
+- 新增 `shared/rectified/README.md`：檔案契約、限制、§6 起點程式碼
+- notebook「B 線」markdown cell 補上工具用法與三條紅線（見下）
+- `TASK_DIVISION.md §3.3` 新增「`shared/rectified/` 的格式契約」小節
+
+**關鍵設計決策 —— 為什麼不直接 resize 到 480×140**：
+這批資料 `AR`（`w/h`）中位數只有 **1.52**，99 張裡有 49 張 < 1.5，
+代表車牌在原圖中普遍斜拍。第一版直接 `cv2.resize` 的結果是
+`RDA2388`（原始框 953×990）被壓成 480×140，字高只剩原本的 1/7，整個變扁 ——
+B 線拿這種圖調 OCR 參數會全部調歪。改為**等比縮放 + 置中補灰邊**，
+保留原比例、字不變形，代價是較方的車牌左右留白。
+
+**試過但放棄的方案**：以色彩遮罩（白底/黃底）+ `minAreaRect` 自動找車牌四邊形
+再做透視變換。失敗原因：車身同樣是銀白色，色彩遮罩分不開，
+`minAreaRect` 會抓到整個裁切區（`RDA2388` 的 area% 達 0.78），
+6 個測試樣本中 4 個失敗。真正的透視校正留給 `[GEO-01]`。
+
+**驗證**：完整執行 62 cells / 35 code cells，0 error；輸出 4 張範例
+（`GN2896` 白、`YL7582` 白、`GT3500` 黃、`GG1996` 白）經目視確認字未變形；
+mask 白佔比與「真實影像區」吻合（`GN2896` 87.9% = 161/629 等比重疊後的高度佔比）；
+兩份 notebook 通過 `nbformat.validate()`。
+
+---
+
 ## 2026-11-21 16:08 — 難度標記語意落地：文件、常數、`label_progress()` 判定
 
 **摘要**：補齊 `difficulty` 的語意說明（`normal` / `hard` / `unreadable` / `not_plate`），

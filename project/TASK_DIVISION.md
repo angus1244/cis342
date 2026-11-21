@@ -149,7 +149,31 @@ Candidate = {
 | **W2 起** | A 交 `rectify()` 輸出圖存到共用 Google Drive 資料夾 `shared/rectified/` | B 用真實輸出開發 OCR，不用等 A 每次重跑 |
 | **每週日 22:00** | 15 分鐘 sync：各自貼進共用 Colab、跑一次、記錄誰壞了 | 避免週末才發現衝突 |
 
-> **關鍵做法**：A 用真實資料跑出 `shared/rectified/*.png` + `shared/labels.csv`，B 直接讀這批圖開發 OCR。**這樣 B 完全不用等 A 完成定位就能開工。**
+> **關鍵做法**：A 用真實資料跑出 `shared/rectified/*.png`，B 直接讀這批圖開發 OCR。**這樣 B 完全不用等 A 完成定位就能開工。**
+
+#### `shared/rectified/` 的格式契約
+
+| 項目 | 值 |
+|---|---|
+| 檔名 | `<stem>.png`，另附 `<stem>_mask.png`（255 = 真實影像、0 = 補邊） |
+| 尺寸 | 固定 `PLATE_W × PLATE_H` = **480 × 140** |
+| 補邊 | 等比縮放後不足處補灰 `(32,32,32)`，**不拉伸、不變形** |
+
+**現況（定位鏈未完成時的替代品）**：`[LOC-01]`→`[GEO-01]` 還是 stub，
+所以由 `tools/export_rectified.py` 直接吃 `labels.csv` 的 GT bbox 裁切產生：
+
+```bash
+py tools/export_rectified.py --all        # 全部 99 張（跳過 unreadable）
+py tools/export_rectified.py IMG_4540     # 指定檔名
+py tools/export_rectified.py --list       # 先看清單
+```
+
+⚠️ 三條紅線：
+1. 這批圖**不是 pipeline 產出**，報告不可這樣寫；`[GEO-01]` 完成後重跑覆蓋
+2. §9 評估**一律走真 pipeline**，用 GT 裁切圖算準確率等於用答案做題
+3. 沒有做透視校正 —— 資料集近半數 bbox 接近正方形（`AR` 中位數 1.52，車牌斜拍），
+   所以較方的車牌左右會留白。`binarize()` 必須用 `_mask.png` 判斷有效區，
+   不能假設整張 480×140 都是車牌
 
 ---
 
