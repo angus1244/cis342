@@ -111,7 +111,8 @@ Candidate = {
 
 | 編號 | 段落 | 具體要做什麼 | 難度 | 依賴 | 交付物 |
 |---|---|---|---|---|---|
-| **INT** | §8 Pipeline | `run_pipeline(img)`：串接所有階段 + 每階段自動存 `debug/<case>/01_pre.png … 06_ocr.png` + 失敗時 fallback（第 2 候選） | ★★★ | 全部 | 共用 Colab notebook、debug 圖 |
+| **INT-01** | §5.5 整合（A 段） | `run_frontend()` / `export_dataset_frontend()`：定位→擷取→校正，把中間狀態寫成 `shared/stages/<stem>_0X_*.png`（只寫 `04_segment` / `05_rectify` / `05_rectify_mask`）。加失敗守門與 GT-bbox 示範模式 | ★★☆ | GEO-01 | `shared/stages/` 檔案 |
+| **INT-02** | §8 整合（B 段） | `list_stage_stems()` / `load_stage()` / `run_backend()`：用 `glob` 讀 A 段檔案 → OCR → 後處理。另保留記憶體版 `run_pipeline()` 供 §9 評估 | ★★☆ | INT-01, OCR, POST | `run_backend()` + 批次表 |
 | **DOC** | report/ | PDF 報告：方法論（每階段為何選此法 + 對照實驗）、結果表、失敗分析、參考文獻 | ★★☆ | EV, INT | PDF |
 | **CASE** | report/ | 挑定 4 成功 + 2 挑戰/失敗案例，附每階段中間圖與失敗原因 | ★☆☆ | INT | 案例章節 |
 | **PPT** | — | 現場簡報（Week 11 起）、demo 流程、分工說明 | ★★☆ | 全部 | 投影片 + demo script |
@@ -147,6 +148,7 @@ Candidate = {
 | **W1 結束** | A 必須交出「能跑但粗糙的 `localize()`+`rectify()`」，即使準確率 <30% | B 沒有 input 就無法開發 OCR |
 | **W1 結束** | B 必須交出 `run_pipeline()` 骨架 + 可執行的 `preprocess()` 佔位版 | A 需要 pipeline 才能驗證 |
 | **W2 起** | A 交 `rectify()` 輸出圖存到共用 Google Drive 資料夾 `shared/rectified/` | B 用真實輸出開發 OCR，不用等 A 每次重跑 |
+| **W2 起** | A 段（§5.5 `INT-01`）每次跑完把中間狀態留在 `shared/stages/`；B 段（§8 `INT-02`）用 `glob` 自己去掃 | **§8 整合已拆兩段**：B 不必等 A 的程式定案，只等檔案。缺檔即視為 A 段失敗 |
 | **每週日 22:00** | 15 分鐘 sync：各自貼進共用 Colab、跑一次、記錄誰壞了 | 避免週末才發現衝突 |
 
 > **關鍵做法**：A 用真實資料跑出 `shared/rectified/*.png`，B 直接讀這批圖開發 OCR。**這樣 B 完全不用等 A 完成定位就能開工。**
@@ -174,6 +176,26 @@ py tools/export_rectified.py --list       # 先看清單
 3. 沒有做透視校正 —— 資料集近半數 bbox 接近正方形（`AR` 中位數 1.52，車牌斜拍），
    所以較方的車牌左右會留白。`binarize()` 必須用 `_mask.png` 判斷有效區，
    不能假設整張 480×140 都是車牌
+
+#### `shared/stages/` 的格式契約（§8 拆段後的 A→B 介面）
+
+| 項目 | 值 |
+|---|---|
+| 檔名 | `<stem>_04_segment.png`、`<stem>_05_rectify.png`、`<stem>_05_rectify_mask.png` |
+| `stem` | 原圖檔名去副檔名，例如 `train_IMG_1231_JPG.rf.4427…` |
+| `05_rectify` | 固定 `PLATE_W × PLATE_H` = **480 × 140**，BGR（**不可轉灰階**，白/黃底極性要靠它） |
+| `05_rectify_mask` | 單通道，255 = 真實影像、0 = 補邊 |
+| 誰寫 | A 段 `[INT-01]` `export_dataset_frontend()` |
+| 誰讀 | B 段 `[INT-02]` `list_stage_stems()` → `load_stage()` |
+
+**B 段怎麼知道有哪些輸入**：`glob('*_05_rectify.png')`，**沒有額外的 manifest 檔**。
+A 段定位失敗就不會產出該 stem 的檔案，因此「掃到什麼」就等於「A 段成功處理了哪些」，
+清單與檔案天生一致，不會有兩份資料對不上的問題。
+
+⚠️ 兩條紅線：
+1. `shared/stages/` 只放 B 段真的需要的三個階段。`01_input`～`03_localize` 是定位除錯用的大圖
+   （每張 2 MB），不要寫進去，否則 100 張就 200 MB
+2. 示範模式（`use_gt_bbox=True`）的輸出**不可用於報告或 §9 準確率** —— 那是拿答案做題
 
 ---
 

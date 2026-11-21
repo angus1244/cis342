@@ -1,3 +1,49 @@
+## 2026-11-21 19:40 — 依隊友要求把 §8 整合拆為 A 段／B 段（`INT-01` / `INT-02`）
+
+**摘要**：隊友希望整合分成兩半，讓 B 線可以獨立開發。§8 原本是單一 `run_pipeline()`
+一次跑完 A→B 全部階段，現在改為：A 段（新 `§5.5`）負責定位→擷取→校正並把中間狀態
+寫成 PNG；B 段（`§8`）用 `glob` 掃 `shared/stages/` 讀回來做 OCR 與後處理。
+notebook 由 62 → 65 cells。
+
+**原因**：B 線（`§6` OCR）若只能等 A 線全部做完才能開始，等於整條線被 `[LOC-01]`
+阻塞。拆開後 B 線可以直接拿 A 段的輸出檔開發，兩邊用「檔案」而不是「函式呼叫」溝通。
+
+**變更**：
+- `[S0-2]`：新增 `STAGE_DIR = shared/stages`，並加入 `os.makedirs` 清單
+- 新 `§5.5`（markdown + `[INT-01]` + self test）：
+  - `run_frontend(img, quad)`：前處理→定位→擷取→校正，回傳各階段影像
+  - `export_frontend()` / `export_dataset_frontend()`：寫檔版，出口是檔案
+  - `EXPORT_STAGES`：只寫 `04_segment` / `05_rectify` / `05_rectify_mask`。
+    原本連 `01_input`~`03_localize` 都寫，每張 2 MB（2 張就 7.3 MB）；
+    收斂後每張 3 檔、共 350 KB，B 段也用不到前三個階段
+  - `use_gt_bbox=True` 示範模式：`[LOC-01]` 完成前先驗證 A→B 交接機制
+- `§8` 改寫為 `[INT-02]` B 段：
+  - `list_stage_stems()`：`glob` 掃 `*_05_rectify.png`，缺檔即視為 A 段失敗
+  - `load_stage()`：讀回階段圖，缺 mask 時用全 255（等同無 mask）
+  - `run_backend(stem)`：讀檔 → `recognize` → `postprocess`
+  - `run_dataset_backend()`：批次版
+  - `run_pipeline()` 保留為「記憶體版」，供 §9 評估與單張推論
+- Colab 交付版同步：65 cells、0 outputs、`nbformat.validate()` 通過
+
+**修掉的 bug**：
+- `load_image()` 會把最長邊縮到 1280，但 `labels.csv` 的 GT bbox 是**原始解析度座標**
+  （最大 4032）。示範模式直接拿 bbox 去切圖 → 切到影像外 → `plate` 是空陣列 →
+  `cv2.resize` 丟 `Assertion failed (!ssize.empty())`。
+  修法：新增 `_image_size()`（只讀檔頭，用 PIL 不解碼整張圖），
+  在 `export_frontend()` 內把 quad 依 `img.shape / 原始尺寸` 換算，
+  並在 `run_frontend()` 加上「擷取區域為空」的防護，回傳可讀的失敗原因。
+
+**驗證**：
+- `nbconvert --execute` 全 notebook 65 cells，0 error
+- 示範模式產出 2 個 stem（`train_IMG_1231…`、`train_IMG_1245…`）；
+  B 段正確讀回 `(140, 480, 3)`，`text=''`（`§6` 尚未實作，符合預期）
+- 目視確認交接圖正確切到車牌：`RDA·2388`、`960·GKF`
+- 檔名帶空格或用 `pick_sample_image()` 都可運作
+
+**注意**：
+- 示範模式的輸出**不可用於報告或 §9 準確率**，那等於拿答案做題
+- `[LOC-01]` 實作後，`use_gt_bbox` 應改回 `False`
+
 ## 2026-11-21 17:10 — 新增 `tools/export_rectified.py`，解除 B 線（§6 OCR）阻塞
 
 **摘要**：B 線反應 `shared/rectified/` 是空的、無法開始 §6。新增匯出工具，
