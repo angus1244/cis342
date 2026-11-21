@@ -321,3 +321,60 @@ py tools/bridge.py ack                                 # 標記已讀
 - [ ] 有至少 2 張「輸入 → 輸出」可視化圖
 - [ ] 在共用 notebook 上由別人重跑一次也得到同樣結果
 - [ ] 有把「為什麼這樣做」寫一句話給寫報告的人
+
+## 協作方式（2026-11-21 起）
+
+### 版本控制
+
+- Repo：`https://github.com/onenok/cis342`（public）
+- `Ho Nok Hei`（`onenok`）為 maintainer，`Li Chi Shing`（`angus1244`）為 collaborator
+- `project/shared/` 底下的 PNG 走 **Git LFS**（`git lfs install` 一次即可）
+
+### 分支規則
+
+**不要直接 push `master`。** 每個人開自己的分支：
+
+| 人 | 分支前綴 | 只改哪些 cell |
+|---|---|---|
+| Ho Nok Hei | `nok/*` | §0–§5、§8 `[INT-01]`/`[INT-02]` |
+| Li Chi Shing | `shing/*` | §6、§7、§9 |
+
+流程：
+
+```bash
+git fetch origin
+git checkout -b shing/ocr origin/master   # 一定從最新 master 開
+# ...改自己的 cell...
+git add -A && git commit
+git push origin shing/ocr
+# 到 GitHub 開 PR 回 master
+```
+
+**開分支前務必先 `git fetch` 並從 `origin/master` 開。** 若從自己的舊分支開，
+PR 會把對方已完成的整節還原成空殼，而 diff 只會顯示「改了很多行」，不會警告。
+
+### notebook 輸出
+
+`.ipynb` 在進入 git 時會自動清除執行輸出（`tools/strip_nb_outputs.py` clean filter）。
+本機檔案仍保留輸出，可以直接看結果；只有 commit 進去的版本是乾淨的。
+
+每個 clone 只需設定一次：
+
+```powershell
+pwsh -NoProfile -File tools/setup_nb_filter.ps1
+```
+
+沒設定也不影響 pull，但你的 commit 會帶著 base64 輸出，PR 的 diff 會變得很難讀。
+
+### 檔案交接
+
+| 方向 | 內容 | 方式 |
+|---|---|---|
+| A → B | `shared/stages/`、`shared/rectified_auto/` | git（LFS），B 線 `git lfs pull` |
+| B → A | `[OCR-01]`/`[OCR-02]`/`[POST-01]` 程式碼 | 分支 + PR |
+| 雙向 | 契約變更、阻塞 | `tools/bridge.py`（見下節） |
+
+### 溝通
+
+`tools/bridge.py` 只用於**跨越分工邊界的決策**：共用契約變更、被卡住求援、
+對方看不到的風險告知。進度報告寫在自己的 `AI_EDIT_LOG.md`，不要用 bridge 聊天。
