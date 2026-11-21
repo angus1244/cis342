@@ -24,4 +24,5 @@ shared.rar
 
 # OS
 Thumbs.db
-.DS_Store
+.DS_Store# 臨時分析用 notebook，不進版控
+project/notebooks/_compare_*.ipynb
