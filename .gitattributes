@@ -1,2 +1,5 @@
 # A 線交給 B 線的圖檔走 Git LFS，避免二進位檔把 repo 撐大
 project/shared/**/*.png filter=lfs diff=lfs merge=lfs -text
+
+# notebook 進 git 前清掉執行輸出，讓 diff 只反映程式碼變更
+project/notebooks/*.ipynb filter=stripoutput
