@@ -62,7 +62,7 @@ Candidate = {
 | `split` | str | `main`（主要測試集）或 `external`（外部測試集，不參與調參） |
 | `text` | str | 正確車牌字串，全大寫、不含空白 |
 | `front_rear` | str | `front`（白底）或 `rear`（黃底） |
-| `difficulty` | str | `easy` / `normal` / `hard` |
+| `difficulty` | str | `normal` / `hard` / `unreadable` / `not_plate`（語意見 §7） |
 | `note` | str | 備註；`[D1-02]` 匯入時會寫入 `bbox=x,y,w,h;n_obj=n` |
 
 **單一車牌原則**：本版 `run_pipeline()` 每次只輸出一個字串。同圖多車牌只標註面積最大者，其餘視為背景。
@@ -218,21 +218,26 @@ Candidate = {
 `difficulty` 實際使用 4 種值：`normal`（可直接判讀）、`hard`（模糊／部分被遮／非車牌）、
 `unreadable`（完全不可判讀）、`not_plate`（標註框不是車牌；目前無此值，保留給未來）。
 
-### 7.3 待辦清單（依序做，未開始）
+### 7.3 待辦清單
 
-- [ ] **文件同步**：`TASK_DIVISION.md §1` 與 notebook「`labels.csv` 欄位」兩處的
-      `difficulty` 說明仍寫 `easy / normal / hard`，需補上 `unreadable` / `not_plate` 與語意
-- [ ] **`label_progress()` 判定修正**：目前用「`text` 是否空白」判斷已標註，
-      #16 會永遠顯示「未標註」。應改為「`text` 非空 **或** `difficulty == 'unreadable'`」才算已處理
+- [x] **文件同步**：`TASK_DIVISION.md §1` 與 notebook「`labels.csv` 欄位」兩處的
+      `difficulty` 說明已補上 `unreadable` / `not_plate` 與語意
+- [x] **`label_progress()` 判定修正**：改由 `_is_labelled()` 統一判定 ——
+      「`text` 非空 **或** `difficulty` 屬 `UNSCORABLE_DIFFICULTIES`」才算已處理；
+      `next_unlabeled()` 同步改用同一判定，否則 #16 會一直被當成待標註
 - [ ] **`evaluate()` 排除邏輯**：實作 §9 時，用 `evaluable_labels()` 過濾後才計算準確率，
       並在 summary 表列出「排除張數 / 有效樣本數」
 - [ ] **報告寫法**：明寫「100 張中 1 張因反光不可判讀、已排除，有效樣本 99 張」，
       並在「失敗案例分析」章節分別引用 #16（客觀不可判讀）與 #26（資料集誤標）
 
-### 7.4 程式碼接口（已預留）
+### 7.4 程式碼接口
 
-`notebooks/lpr_dev.ipynb` 的 `[EV-01]` 已預留 `EVAL_EXCLUDE_DIFFICULTY` 常數與
-`evaluable_labels()` 空殼，實作 §9 時直接填內容即可，不必再找插入點。
+- `[S0-2]` 定義 `LABEL_DIFFICULTIES` / `UNSCORABLE_DIFFICULTIES` 兩個常數，
+  所有需要判斷難度的地方都引用它們，不要在各地硬寫字串
+- `[D1-03]` 的 `_is_labelled()` 是「是否已處理」的唯一判定來源，
+  `label_progress()` 與 `next_unlabeled()` 都呼叫它
+- `[EV-01]` 的 `EVAL_EXCLUDE_DIFFICULTY` 是 `UNSCORABLE_DIFFICULTIES` 的別名，
+  `evaluable_labels()` 空殼仍待實作，實作 §9 時直接填內容即可
 
 ---
 

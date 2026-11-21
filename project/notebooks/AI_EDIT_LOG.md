@@ -1,3 +1,32 @@
+## 2026-11-21 16:08 — 難度標記語意落地：文件、常數、`label_progress()` 判定
+
+**摘要**：補齊 `difficulty` 的語意說明（`normal` / `hard` / `unreadable` / `not_plate`），
+把難度值收斂成共用常數，並修正 `label_progress()` 會把 #16 永遠算成「未標註」的問題。
+
+**原因**：`unreadable` 那一列的 `text` 刻意留空（反光遮蔽、人眼不可判讀），
+但 `label_progress()` 只用「`text` 是否空白」判斷，導致明明 100 張全數審核完成，
+進度表卻永遠顯示 99/100。同時 `save_label()` 與 `annotate_next()` 仍在用
+`easy` 這個實際資料中不存在的值。
+
+**變更**：
+- `[S0-2]` 新增 `LABEL_DIFFICULTIES`、`UNSCORABLE_DIFFICULTIES` 兩個常數，
+  作為全 notebook 唯一的難度值來源，避免各處硬寫字串
+- 「`labels.csv` 欄位」markdown cell：`difficulty` 改列四種值，並新增語意表
+  （哪一種計入 §9 準確率、為什麼 `unreadable` 不填猜測值）
+- `[D1-03]` 新增 `_is_labelled()`：「`text` 非空 **或** `difficulty` 屬不可評分」才算已處理；
+  `label_progress()` 與 `next_unlabeled()` 都改用它
+- `[D1-03]` `save_label()` 允許 `unreadable` 留空；`annotate_next()` 難度選單
+  由 `easy/normal/hard` 改为 `LABEL_DIFFICULTIES`
+- `[EV-01]` `EVAL_EXCLUDE_DIFFICULTY` 改為引用 `UNSCORABLE_DIFFICULTIES` 的別名
+  （保留舊名，既有說明與報告不用改），`evaluable_labels()` 仍為空殼，留待 §9
+- `TASK_DIVISION.md` §1 欄位表與 §7.3 / §7.4 同步更新，兩項待辦標為完成
+
+**驗證**：完整執行 35 個 code cell，0 error；`label_progress()` 由 99/100 修正為
+**100/100 已標註**；`labels.csv` 仍為 100 列、99 有效標註、排序正確；
+兩份 notebook 均通過 `nbformat.validate()`。
+
+---
+
 # AI 編輯紀錄（`lpr_dev.ipynb`）
 
 > **用途**：記錄每一次由 AI 執行、對 `notebooks/lpr_dev.ipynb` 的修改**摘要與原因**。
