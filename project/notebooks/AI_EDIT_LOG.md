@@ -1,3 +1,41 @@
+## 2026-11-22 22:55 — 新增 requirements.txt 與 setup_env.ps1（離線交付環境）
+
+**摘要**：為 12/18 遞交與 11/24 presentation 加上「不依賴 Google Colab」的執行路徑。
+新增 `requirements.txt`（121 個解析後套件，頂層只鎖 7 個）與 `setup_env.ps1`
+（建 venv → 安裝 → 註冊 kernel → 驗證）。**沒有**把 `.venv` 上傳 git。
+
+**為什麼要做**：Colab 是 Python 3.13.18，本機是 3.12.10，且 Colab 的
+`google-colab` / `numba` / `gradio` 分別把 pandas 鎖在 2.2.3、numpy <2.5、pillow <13。
+硬把 Colab 對齊本機版本會打破 Colab 自身的相依鏈（實測三條衝突）。
+既然 notebook 在原生 Colab 上本來就能跑（cell 52 有 `%pip install easyocr`、
+cell 54 用 `try/except` 包住 `import torch` / `import easyocr`），
+就不該為了「版本號一致」去動宿主環境。改為提供一條本機可重現的路徑。
+
+**為什麼不把 venv 放進 git**：實測 `.venv` 是 **1437.8 MB / 51,632 個檔案**，
+而 `.git` 本身已 1045.3 MB。GitHub 單檔上限 100 MB、repo 軟上限 1 GB；
+Git LFS 免費額度 1 GB 儲存 / 1 GB 月流量。而且 venv **不可搬**——
+`pyvenv.cfg` 的 `home`、`Scripts\python.exe` 內嵌的絕對路徑都寫死本機位置，
+複製到另一台機器一定壞。1437 MB 中又有約 240 MB 是 notebook 沒 import 的
+（gradio 75、sympy 66、jupyterlab 24、debugpy 31）。
+
+**關鍵決策：opencv 只用 headless**
+`easyocr==1.7.2` 硬性依賴 `opencv-python-headless`。若同時列 `opencv-python`，
+dry-run 解析出 `opencv-python==5.0.0.93` + `opencv-python-headless==5.1.0.95` 兩個
+distribution，會互相覆蓋 `site-packages\cv2`。查核後確認 notebook 全程用
+matplotlib 顯示（`ax.imshow`），沒有任何 `cv2.imshow` / `waitKey` / `namedWindow`，
+所以只保留 `opencv-python-headless==5.0.0.93`（與本機 `cv2.__version__` 5.0.0 一致）。
+
+**驗證**：`pip install --dry-run --ignore-installed --report` 對
+`requirements.txt` 解析成功，EXIT=0，121 個套件，OpenCV 只有一個 distribution。
+
+**已知限制**：
+- `setup_env.ps1` 未在「全新機器」實跑過完整安裝（會下載約 700 MB、10–15 分鐘）；
+  已驗證的是**依賴解析**，不是完整安裝。
+- `ipywidgets` 本機未安裝（notebook cell 30 有 `try/except` 會優雅降級）；
+  清單仍列入，因為 `annotate_next()` 互動標註需要它。
+- presentation 機器需先 `git lfs install`，否則 `shared/**/*.png`（345 個）不會拉下來。
+
+---
 ## 2026-11-22 10:50 — 實作 [GEO-01] 真透視校正（取代純 cv2.resize）
 
 **摘要**：把 `[GEO-01]` 從「`cv2.resize` 硬拉成 480×140」改成真正的透視變換。

@@ -1,0 +1,33 @@
+# ==== CIS342 Group 6 — LPR 專案執行環境 ====
+# 這份清單對應 2026-11-22 在本機實際跑完 notebooks/lpr_dev.ipynb（0 error）的組合。
+# 只列 notebook 真正 import 的套件；jupyter 相關另外列在檔案末段（只為開 notebook 用）。
+#
+# 安裝：見 setup_env.ps1
+# 注意：torch / torchvision 在 Windows 上從 PyPI 裝就是 CPU 版，不需要額外的 index-url。
+
+# --- 核心 ---
+numpy==2.5.5
+# 只用 headless：notebook 全程用 matplotlib 顯示（ax.imshow），沒有呼叫 cv2.imshow。
+# 這點很重要 —— easyocr 硬性依賴 opencv-python-headless，若同時裝 opencv-python，
+# 兩個 distribution 會互相覆蓋 site-packages\cv2，出現版本混血而隨機壞掉。
+opencv-python-headless==5.0.0.93
+pillow==13.0.0
+pandas==3.1.1
+matplotlib==3.11.2
+
+# --- OCR（easyocr 會連帶帶入 scikit-image / scipy / python-bidi 等）---
+easyocr==1.7.2
+torch==2.15.0
+torchvision==0.29.2
+
+# --- notebook UI ---
+# ipywidgets 只給 [D1-03] 的 annotate_next() 互動標註用；
+# notebook 內有 try/except，沒裝會優雅降級，不會中斷執行。
+ipywidgets==8.1.7
+ipython==9.18.1
+
+# --- 執行 / 轉換 notebook（跑 nbconvert 驗證時需要）---
+ipykernel==7.4.0
+jupyterlab==4.6.6
+nbconvert==7.17.2
+nbformat==5.11.1
