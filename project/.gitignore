@@ -15,8 +15,11 @@ debug/
 # Dataset (downloaded at runtime by [D1-04] / [D1-05], never in git)
 data/images/
 data/raw/
-data/labels.csv
+# labels.csv 是人工標註成果（100 筆），無法從資料集重生，因此納入版控與隊友同步。
+# 它只有車牌字串與 bbox，不含任何個人資料。
+#data/labels.csv
 data/labels.backup.csv
+data/evaluation.csv
 
 # Bridge 的本機狀態（訊息、游標）不進版控；交接用的圖與 csv 走 Git LFS
 shared/bridge/
@@ -24,5 +27,7 @@ shared.rar
 
 # OS
 Thumbs.db
-.DS_Store# 臨時分析用 notebook，不進版控
-project/notebooks/_compare_*.ipynb
+.DS_Store
+
+# 臨時分析用 notebook，不進版控
+notebooks/_compare_*.ipynb
