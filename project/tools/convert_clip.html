@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>本機 .ipynb 轉 Colab 剪貼簿工具 (支援自動學習格式)</title>
+<style>
+  body { font-family: sans-serif; padding: 20px; max-width: 750px; margin: auto; line-height: 1.5; }
+  .step-box { background: #f0f4f8; border-left: 4px solid #4285f4; padding: 12px 16px; margin-bottom: 18px; border-radius: 4px; }
+  #dropzone { border: 2px dashed #4285f4; padding: 25px; text-align: center; color: #555; border-radius: 8px; margin-bottom: 15px; cursor: pointer; background: #fff; }
+  button { background: #4285f4; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; font-size: 14px; }
+  button:hover { background: #3367d6; }
+  .cell { border: 1px solid #ddd; padding: 10px; margin-bottom: 8px; border-radius: 5px; background: #f9f9f9; }
+  .cell-header { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; color: #666; }
+  pre { margin: 0; white-space: pre-wrap; font-size: 13px; max-height: 100px; overflow: hidden; }
+  textarea { width: 100%; height: 60px; margin-top: 8px; box-sizing: border-box; }
+  .badge { background: #e8f0fe; color: #1967d2; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h3>本機 .ipynb 轉 Colab 儲存格複製工具</h3>
+
+<div class="step-box">
+  <b>步驟 1：讓工具學習你目前 Colab 的剪貼簿格式（只需做一次）</b><br>
+  1. 去你的 Colab 頁面，點選隨便一個儲存格的外框，按 <b>Ctrl+C</b> 複製。<br>
+  2. 回到這裡，點擊下方的輸入框並按 <b>Ctrl+V</b> 貼上：<br>
+  <textarea id="learnBox" placeholder="點這裡按 Ctrl+V 貼上剛才從 Colab 複製的儲存格..."></textarea>
+  <div id="statusText" style="margin-top:6px; font-size:13px; color:#d93025;">尚未偵測到 Colab 格式（目前使用預設格式）</div>
+</div>
+
+<div class="step-box">
+  <b>步驟 2：載入本機 .ipynb 並複製</b>
+  <div id="dropzone" style="margin-top:10px;">將本機的 <b>.ipynb</b> 檔案拖曳到此處，或點擊選擇檔案</div>
+  <input type="file" id="fileInput" accept=".ipynb" style="display:none">
+  <button id="copyAllBtn" style="display:none; margin-bottom:10px;">複製「全部」儲存格到 Colab</button>
+  <div id="cellList"></div>
+</div>
+
+<script>
+let detectedMimeType = "application/vnd.colab-cell+json";
+let sampleTemplate = null;
+let parsedCells = [];
+
+const learnBox = document.getElementById('learnBox');
+const statusText = document.getElementById('statusText');
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const cellList = document.getElementById('cellList');
+const copyAllBtn = document.getElementById('copyAllBtn');
+
+// 攔截貼上事件，直接讀取系統剪貼簿內的所有真實格式名稱與結構
+learnBox.addEventListener('paste', (e) => {
+  e.preventDefault();
+  const types = e.clipboardData.types;
+  let foundInfo = [];
+  
+  for (const t of types) {
+    const rawData = e.clipboardData.getData(t);
+    foundInfo.push(`${t}: ${rawData.substring(0, 80)}...`);
+    // 尋找包含 colab 或 json 的專屬格式
+    if (t !== 'text/plain' && t !== 'text/html' && rawData.includes('cell')) {
+      detectedMimeType = t;
+      try {
+        sampleTemplate = JSON.parse(rawData);
+      } catch (err) {}
+    }
+  }
+
+  if (sampleTemplate) {
+    statusText.style.color = '#188038';
+    statusText.innerHTML = `✅ 成功學習！偵測到格式：<span class="badge">${detectedMimeType}</span>`;
+    learnBox.value = "格式已鎖定！你現在可以去下方載入 .ipynb 檔案了。";
+  } else {
+    statusText.style.color = '#d93025';
+    statusText.innerHTML = `⚠️ 未找到 Colab 專屬格式，偵測到的格式只有：${types.join(', ')}。請確認在 Colab 是選取「整個儲存格」而非反白文字。`;
+  }
+});
+
+dropzone.onclick = () => fileInput.click();
+dropzone.ondragover = e => { e.preventDefault(); dropzone.style.background = '#eef4ff'; };
+dropzone.ondragleave = () => dropzone.style.background = '';
+dropzone.ondrop = e => { e.preventDefault(); dropzone.style.background = ''; handleFile(e.dataTransfer.files[0]); };
+fileInput.onchange = e => handleFile(e.target.files[0]);
+
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const nb = JSON.parse(e.target.result);
+    parsedCells = nb.cells || [];
+    renderCells();
+  };
+  reader.readAsText(file);
+}
+
+function renderCells() {
+  cellList.innerHTML = '';
+  copyAllBtn.style.display = parsedCells.length ? 'inline-block' : 'none';
+  parsedCells.forEach((cell, idx) => {
+    const div = document.createElement('div');
+    div.className = 'cell';
+    const content = Array.isArray(cell.source) ? cell.source.join('') : cell.source;
+    div.innerHTML = `
+      <div class="cell-header">
+        <span>#${idx + 1} [${cell.cell_type}]</span>
+        <button onclick="copyToColab([parsedCells[${idx}]])" style="padding:4px 8px;font-size:12px;">複製此格</button>
+      </div>
+      <pre>${content.replace(/</g, '&lt;')}</pre>
+    `;
+    cellList.appendChild(div);
+  });
+}
+
+copyAllBtn.onclick = () => copyToColab(parsedCells);
+
+// 使用傳統 copy 事件攔截寫入，完美支援本機 file:// 開啟且不被瀏覽器封鎖
+function copyToColab(cells) {
+  const formattedCells = cells.map(c => ({
+    cell_type: c.cell_type,
+    source: Array.isArray(c.source) ? c.source : [c.source],
+    metadata: c.metadata || {},
+    ...(c.cell_type === 'code' ? { outputs: [], execution_count: null } : {})
+  }));
+
+  // 依據學習到的結構包裝（若未學習則用標準陣列或 cells 物件）
+  let payloadObj = { cells: formattedCells };
+  if (sampleTemplate) {
+    if (Array.isArray(sampleTemplate)) {
+      payloadObj = formattedCells;
+    } else if (sampleTemplate.cells) {
+      payloadObj = { ...sampleTemplate, cells: formattedCells };
+    }
+  }
+
+  const jsonStr = JSON.stringify(payloadObj);
+  const plainStr = cells.map(c => Array.isArray(c.source) ? c.source.join('') : c.source).join('\n\n');
+
+  const onCopy = (e) => {
+    e.preventDefault();
+    e.clipboardData.setData(detectedMimeType, jsonStr);
+    e.clipboardData.setData('text/plain', plainStr);
+    document.removeEventListener('copy', onCopy);
+  };
+
+  document.addEventListener('copy', onCopy);
+  document.execCommand('copy');
+  alert(`已使用格式 [${detectedMimeType}] 複製 ${cells.length} 個儲存格！\n請切換到共用 Colab 頁面（確保游標不在文字框內）按 Ctrl+V。`);
+}
+</script>
+</body>
+</html>
