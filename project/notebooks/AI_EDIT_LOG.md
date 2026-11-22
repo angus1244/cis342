@@ -583,3 +583,22 @@ N=26 只收成功校正樣本，有選擇偏差，不能當整體準確率。
 `shared/rectified_auto/`（26 組，`maskfill` median 0.90）。
 `lpr_dev.ipynb` 已重新執行，LOC 與 EV self test 均 0 error。
 
+## 2026-11-22 17:45 — 合併 PR #4：現場測試入口與整圖 OCR 兜底
+
+**摘要**：合併 PR #4，新增 [INT-03] `recognize_path()` / `recognize_folder()`、
+[INT-03b] 互動選圖入口，以及整圖文字候選 `detect_plate_candidates()` 和
+`read_plate_wholeimage()`。定位成功走 pipeline；定位失敗或主路答案不合法時，
+可再跑整圖兜底，以 `(valid, format_score, conf, length)` 擇優。
+
+**合併前驗證**：`merge-base` 確認 master 已包含於 PR 分支、merge-tree 無衝突；
+隔離工作樹執行完整 notebook，0 error。
+
+**回歸數字**：
+- LOC recall@1 51.5%、recall@k 60.6%、平均最佳 IoU 0.503
+- §9 26 組 exact 69.2%、CER 0.158、valid 88.5%
+- `read_plate` / 資料契約簽名未變
+
+**口徑限制**：整圖入口是現場 demo 路徑，不應混入 §9 的 26 組上限量測。
+三組報告口徑仍分開：99 張原圖 end-to-end 39.4%、95 張 stages 融合 41.1%、
+26 組 rectified_auto 融合 69.2%。
+
