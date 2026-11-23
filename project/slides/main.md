@@ -219,7 +219,7 @@ Hong Kong plates use a stroke weight, aspect ratio and surface texture that no a
 | **Ours: own split + EasyOCR per line** | **7 / 7** |
 | **§9 - rectified pipeline output** | **95 / 26 crops** |
 | Single path, own split only | 32.6% / 61.5% |
-| **Two-path fusion** | **41.1% / 69.2%** |
+| **Two-path fusion** | **40.0% / 69.2%** |
 
 ---
 
@@ -256,7 +256,7 @@ Hong Kong plates use a stroke weight, aspect ratio and surface texture that no a
 ![w:690](assets/b-results-scope.png)
 
 - **Different denominators, on purpose** - 99 images, 95 crops, 26 high-IoU crops; never merged
-- **Fusion pays** - +8.5 points on 95 crops, +7.7 on the 26 crops
+- **Fusion pays** - +7.4 points on 95 crops, +7.7 on the 26 crops
 - **Geometry pays more** - 57.7% to 69.2% once GEO-01 replaced a plain resize
 - **The upper bound** - 7/7 clean crops; the gap to 39.4% is localisation, not OCR
 
@@ -266,7 +266,7 @@ Hong Kong plates use a stroke weight, aspect ratio and surface texture that no a
 
 ![w:620](assets/b-errors.png)
 
-- **45 of 56 wrong plates are missing characters** - never presented to the reader
+- **45 of 57 wrong plates are missing characters** - never presented to the reader
 - **Why** - the crop still holds bumper and bodywork; dark regions merge into the text band
-- **Localisation is the ceiling** - of 69 images at IoU < 0.5, only 2.9% read correctly
-- **Next step** - a position prior (letters first, digits last) and a tighter plate region
+- **The other 11 are pure confusion** - same length, swapped glyphs: MZ9073 to MZ9078, VC6296 to VG6296
+- **Next step** - a position prior (letters first, digits last) fixes the confusable ones cheaply; the missing ones need a tighter crop, and that is upstream
