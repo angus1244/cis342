@@ -219,7 +219,7 @@ Hong Kong plates use a stroke weight, aspect ratio and surface texture that no a
 | **Ours: own split + EasyOCR per line** | **7 / 7** |
 | **§9 - rectified pipeline output** | **95 / 26 crops** |
 | Single path, own split only | 32.6% / 61.5% |
-| **Two-path fusion** | **41.1% / 69.2%** |
+| **Two-path fusion** | **40.0% / 69.2%** |
 
 ---
 
@@ -256,7 +256,7 @@ Hong Kong plates use a stroke weight, aspect ratio and surface texture that no a
 ![w:690](assets/b-results-scope.png)
 
 - **Different denominators, on purpose** - 99 images, 95 crops, 26 high-IoU crops; never merged
-- **Fusion pays** - +8.5 points on 95 crops, +7.7 on the 26 crops
+- **Fusion pays** - +7.4 points on 95 crops, +7.7 on the 26 crops
 - **Geometry pays more** - 57.7% to 69.2% once GEO-01 replaced a plain resize
 - **The upper bound** - 7/7 clean crops; the gap to 39.4% is localisation, not OCR
 
@@ -284,7 +284,7 @@ The 26-crop and 7/7 numbers are unaffected - they are a different denominator.
 
 ![w:620](assets/b-errors.png)
 
-- **45 of 56 wrong plates are missing characters** - never presented to the reader
+- **45 of 57 wrong plates are missing characters** - and 5 of those came back completely empty
+- **The other 12 are same-length confusion** - 5 differ by one glyph (1-6, 3-8, C-G, W-H, Z-L), 6 differ by two or more (960GKF to TER209)
 - **Why** - the crop still holds bumper and bodywork; dark regions merge into the text band
-- **Localisation is the ceiling** - of 69 images at IoU < 0.5, only 2.9% read correctly
-- **Next step** - a position prior (letters first, digits last) and a tighter plate region
+- **A position prior is not the fix** - all five one-glyph predictions already pass the HK format check; they need a tighter crop upstream, not more grammar
