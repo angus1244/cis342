@@ -1,3 +1,37 @@
+## 2026-11-23 — 中文對照版簡報（`slides/main.zh.md` + `slides/assets/zh/`，**非上台用**）
+
+**摘要**：新增一份 15 頁繁體中文簡報，內容與 `main.md` 逐頁對應，用途是讓作者本人
+先讀懂自己那半邊在講什麼，再決定台上怎麼講。**上台仍然用英文版 `main.md`**，
+兩份檔案互不引用，改一邊不會動到另一邊。
+
+**為什麼要另生成圖表，而不是叫 matplotlib 換字型就好**：中文標籤的視覺寬度與英文不同
+（例如「定位 IoU 區間」比 `localisation IoU band` 短很多），直接沿用英文版的
+`figsize` 會讓長條圖留白過多、或 `a-geo.png` 的頂部標題被裁掉。所以
+`debug/make_a_zh.py` 是一份獨立腳本，六個 `fig_*()` 各自控制版面，
+**選圖、數值、圖片尺寸與英文版完全一致，只換標籤文字**，確保兩份簡報講的是同一批數字。
+
+**為什麼 B 線五頁沿用英文原圖**：`b-errors.png`、`b-ocr-pipeline.png`、
+`b-results-scope.png` 的產生腳本在隊友手上（見 `shared/` 與 bridge #37），
+重畫等於我這邊自己生一份沒有權威性的圖，日後他改圖兩邊就會不一致。
+因此在中文版這幾頁下方加一行註記「隊友產生的英文原圖」，讀者不會誤以為是翻譯漏做。
+
+**B 線的數字差異**：英文版第 15 頁寫「45 of **56** wrong plates」「of **69** images at
+IoU < 0.5, only **2.9%** read correctly」。實算是 95 張中 wrong 有 **57** 張、
+IoU < 0.5 是 **36** 張（讀對 3 張 = **8.3%**），而 **69** 是「不在 `rectified_auto`
+的張數」（95 − 26），那批讀對 20/69 = 29.0%。三個數字混在同一個句子裡。
+已在 bridge #37 把核算過程寄給隊友確認；**英文版未改動**（那是他的頁面），
+中文版先按實算數字寫，並在講者備註用 `※` 標明待同步。
+
+**排版修正**：中文版字級 24px / line-height 1.4，比英文版吃高度。
+實測不溢出的寬度上限：dataset `880`、loc-candidates `790`、recall `960`、
+seg-mask `950`、geo `880`、ceiling `540`、b-results-scope `510`、b-errors `620`。
+其中 ceiling 與 b-results-scope 兩頁原本沿用英文版的 `620` / `690`，
+最後一條 bullet 會壓到 footer，縮圖並砍短 bullet 後才通過。
+
+**驗證**：`npx @marp-team/marp-cli main.zh.md --allow-local-files --images png`
+渲染 15 張，逐張目視確認無溢出、footer 與頁碼未被遮蓋。
+
+---
 ## 2026-11-23 — 補完 A 線 Marp 簡報六頁（`slides/main.md` 第 3–8 頁 + 6 張實跑插圖）
 
 **摘要**：`project/slides/main.md` 從 8 頁長到 **14 頁**（封面 1 + A 線分隔 1 + A 線 6 + 共用契約 1 + B 線 5）。所有數字都是**重跑
