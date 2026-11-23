@@ -154,7 +154,7 @@ out of 100 at exactly 480 x 140.
 
 ![w:620](assets/a-ceiling.png)
 
-- **Below IoU 0.5 the reader is nearly blind** - 8.3% whole-plate on 36 images, against 59.3% above it
+- **Below IoU 0.5 the reader is nearly blind** - 11.5% whole-plate on 26 images, against 67.3% above it
 - **Nothing in the OCR explains that gap** - same reader, same binariser, same format rules; only the crop differs
 - **Here is why the two numbers never merge** - 48.7% over 78 crops is what a user gets; 69.2% over the 26 curated ones is what a good crop buys
 - **So the next effort belongs upstream** - a learned plate detector replaces the colour mask and the hand-tuned score, keeping the mask handover and the 480 x 140 contract
