@@ -311,36 +311,129 @@ def _esc(s: str) -> str:
     return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
 
 
+def _board_peers(msgs: list[dict], cursors: dict) -> list[str]:
+    """頁面上要追蹤已讀狀態的身分：有 cursor 的，加上任何出現過的具名收件人。"""
+    peers = set(cursors)
+    for m in msgs:
+        to = str(m.get("to", "")).strip()
+        if to not in ("", "all", "*"):
+            peers.add(to)
+    return sorted(peers)
+
+
 def render_board() -> str:
-    """給人看的留言板頁面。Agent 不需要它，但肉眼掃一遍比讀 JSON 快。"""
+    """給人看的留言板頁面。Agent 不需要它，但肉眼掃一遍比讀 JSON 快。
+
+    已讀狀態的來源是 state.json 的 cursors（就是 ack 推進的那個數字），
+    所以頁面顯示的一定和 `inbox --unread` 撈到的一致，不是另外猜的。
+    """
     msgs = load_messages()
-    rows = []
-    for m in reversed(msgs[-200:]):
+    cursors = {k: int(v) for k, v in load_state()["cursors"].items()}
+    peers = _board_peers(msgs, cursors)
+    shown = msgs[-200:]
+
+    # 每個身分的未讀張數（與 read_inbox 同一條判準）
+    chips = []
+    for p in peers:
+        cur = cursors.get(p, 0)
+        unread = sum(1 for m in msgs
+                     if _visible_for(m, p) and int(m.get("seq", 0)) > cur)
+        state = "ok" if unread == 0 else "new"
+        chips.append(
+            f"<span class='chip {state}'>{_esc(p)}"
+            f"<b>已讀到 #{cur}</b>"
+            f"<span class='chip-sub'>{'全部已讀' if unread == 0 else f'{unread} 則未讀'}</span>"
+            f"</span>")
+    chips_html = "".join(chips) or "<span class='chip'>（尚無已讀紀錄）</span>"
+
+    NCOL = 7
+    rows: list[str] = []
+    # 從最新往舊印，所以每個身分的指標只會插入一次：第一次遇到 seq <= cursor 的位置。
+    pending = {p: True for p in peers}
+
+    for m in reversed(shown):
+        seq = int(m.get("seq", 0))
+
+        boundary = [p for p in peers if pending[p] and seq <= cursors.get(p, 0)]
+        if boundary:
+            for p in boundary:
+                pending[p] = False
+            labels = "、".join(
+                f"{_esc(p)} 已讀到 #{cursors.get(p, 0)}" for p in boundary)
+            rows.append(
+                f"<tr class='ptr'><td colspan={NCOL}>▲ 已讀指標 —— {labels}"
+                f"（此線以上的訊息對該身分為未讀）</td></tr>")
+
+        recipients = [p for p in peers if _visible_for(m, p)]
+        unread_for = [p for p in recipients if seq > cursors.get(p, 0)]
+        if recipients:
+            badges = "".join(
+                f"<span class='badge {'ok' if seq <= cursors.get(p, 0) else 'new'}'>"
+                f"{_esc(p)} {'已讀' if seq <= cursors.get(p, 0) else '未讀'}</span>"
+                for p in recipients)
+        else:
+            badges = "<span class='badge'>—</span>"
+
+        reply = (f"<div class='reply'>↳ 回覆 #{m['reply_to']}</div>"
+                 if m.get("reply_to") else "")
         rows.append(
-            f"<tr><td>{m.get('seq')}</td>"
+                    f"<tr{' class=unread' if unread_for else ''}><td class='seq'>{seq}</td>"
             f"<td>{_esc(m.get('from'))}</td>"
             f"<td>{_esc(m.get('to'))}</td>"
             f"<td>{_esc(m.get('part'))}</td>"
-            f"<td class='t'>{_esc(m.get('text')).replace(chr(10), '<br>')}</td>"
-            f"<td class='ts'>{_esc(str(m.get('ts'))[:19])}</td></tr>"
-        )
-    body = "\n".join(rows) or "<tr><td colspan=6>（尚無訊息）</td></tr>"
+            f"<td class='st'>{badges}</td>"
+            f"<td class='t'>{_esc(m.get('text')).replace(chr(10), '<br>')}{reply}</td>"
+            f"<td class='ts'>{_esc(str(m.get('ts'))[:19])}</td></tr>")
+
+    for p in peers:            # cursor 之後沒有更舊的訊息時，指標落在表格最底
+        if pending[p]:
+            cur = cursors.get(p, 0)
+            rows.append(
+                f"<tr class='ptr'><td colspan={NCOL}>▲ 已讀指標 —— {_esc(p)} 已讀到 #{cur}"
+                f"（此線以上全部為未讀）</td></tr>")
+
+    body = "\n".join(rows) or f"<tr><td colspan={NCOL}>（尚無訊息）</td></tr>"
     return f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Bridge 留言板</title>
 <style>
  body{{font-family:system-ui,-apple-system,"Microsoft JhengHei",sans-serif;
       margin:24px;background:#fafafa;color:#222}}
- h1{{font-size:18px;margin:0 0 4px}} .sub{{color:#666;font-size:13px;margin-bottom:16px}}
+ h1{{font-size:18px;margin:0 0 8px}} .sub{{color:#666;font-size:13px;margin-bottom:12px}}
+ .chips{{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}}
+ .chip{{display:inline-flex;align-items:baseline;gap:6px;padding:6px 10px;
+       border-radius:14px;background:#eef1f4;font-size:12px;color:#445}}
+ .chip b{{font-size:12px}} .chip.ok{{background:#e3f4f0;color:#1f7a6d}}
+ .chip.new{{background:#fdf0dd;color:#a86a12}}
+ .chip-sub{{color:#7a8794;font-size:11px}}
  table{{border-collapse:collapse;width:100%;background:#fff;
        box-shadow:0 1px 3px rgba(0,0,0,.08);font-size:13px}}
  th,td{{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;text-align:left}}
- th{{background:#f0f0f3;font-weight:600;position:sticky;top:0}}
- td.t{{max-width:640px;white-space:pre-wrap}} td.ts{{color:#999;font-size:12px;white-space:nowrap}}
+ th{{background:#f0f0f3;font-weight:600;position:sticky;top:0;z-index:1}}
+ td.seq{{color:#889;font-variant-numeric:tabular-nums;white-space:nowrap}}
+ td.t{{max-width:620px;white-space:pre-wrap}} td.ts{{color:#999;font-size:12px;white-space:nowrap}}
+ td.st{{white-space:nowrap}}
+ .badge{{display:inline-block;margin:1px 3px 1px 0;padding:1px 7px;border-radius:9px;
+        font-size:11px;border:1px solid transparent}}
+ .badge.ok{{background:#e3f4f0;color:#1f7a6d;border-color:#bfe4dc}}
+ .badge.new{{background:#fdf0dd;color:#a86a12;border-color:#f0d3a0;font-weight:600}}
+ tr.unread td{{background:#fffdf7}}
+ tr.unread td.seq{{box-shadow:inset 3px 0 0 #E9A13B}}
+ tr.ptr td{{background:#f6f8fa;color:#33658A;font-size:11.5px;
+           border-top:2px dashed #c9d4de;border-bottom:2px dashed #c9d4de;
+           padding:5px 10px;letter-spacing:.02em}}
+ .reply{{color:#94a3ab;font-size:11px;margin-top:4px}}
+ .legend{{color:#7a8794;font-size:12px;margin:12px 0 0}}
 </style></head><body>
 <h1>Bridge 留言板</h1>
 <div class="sub">共 {len(msgs)} 則訊息（顯示最近 {min(len(msgs), 200)} 則，最新的在最上面）</div>
-<table><thead><tr><th>#</th><th>From</th><th>To</th><th>Part</th><th>內容</th><th>時間</th></tr></thead>
-<tbody>{body}</tbody></table></body></html>"""
+<div class="chips">{chips_html}</div>
+<table><thead><tr><th>#</th><th>From</th><th>To</th><th>Part</th><th>已讀狀態</th>
+<th>內容</th><th>時間</th></tr></thead>
+<tbody>{body}</tbody></table>
+<div class="legend">已讀狀態取自 <code>state.json</code> 的 cursors，與
+<code>bridge.py inbox --unread</code> 用的是同一個數字；
+<code>bridge.py ack</code> 之後重新載入本頁即可看到指標移動。</div>
+</body></html>"""
 
 
 def run_server(host: str, port: int) -> None:
