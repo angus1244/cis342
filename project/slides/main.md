@@ -266,7 +266,7 @@ Hong Kong plates use a stroke weight, aspect ratio and surface texture that no a
 
 ![w:620](assets/b-errors.png)
 
-- **45 of 57 wrong plates are missing characters** - never presented to the reader
+- **45 of 57 wrong plates are missing characters** - and 5 of those came back completely empty
+- **The other 12 are same-length confusion** - 5 differ by one glyph (1-6, 3-8, C-G, W-H, Z-L), 6 differ by two or more (960GKF to TER209)
 - **Why** - the crop still holds bumper and bodywork; dark regions merge into the text band
-- **The other 11 are pure confusion** - same length, swapped glyphs: MZ9073 to MZ9078, VC6296 to VG6296
-- **Next step** - a position prior (letters first, digits last) fixes the confusable ones cheaply; the missing ones need a tighter crop, and that is upstream
+- **A position prior is not the fix** - all five one-glyph predictions already pass the HK format check; they need a tighter crop upstream, not more grammar
