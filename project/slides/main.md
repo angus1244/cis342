@@ -192,6 +192,18 @@ Every number carries its scope - the three denominators are never merged.
 -->
 
 ---
+<!-- _class: lead -->
+
+# B-line: OCR, post-processing and integration
+
+<!--
+Sections 6-9. Five slides. The handover contract on the previous slide is what
+makes this half testable on its own: it receives a 480 x 140 crop and a mask,
+and it never looks at the original photograph. Every number here is reported
+against one of three scopes, and the scope is always printed next to it.
+-->
+
+---
 
 ## We own the split, we borrow the recogniser
 

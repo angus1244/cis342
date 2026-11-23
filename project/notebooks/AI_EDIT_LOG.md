@@ -54,6 +54,12 @@ A 線只有一個 `TODO(nok)` placeholder。這批必須在今晚完成。
 `### A-line: image to a rectified crop  ·  B-line: OCR and post-processing`。
 
 ---
+**追加（15:04）**：B 線原本沒有分隔頁，結構不對稱（A 線有 `# A-line: image to a rectified crop`，
+B 線直接由 `## We own the split` 開場）。在第 9 頁「共用契約」之後補一頁
+`# B-line: OCR, post-processing and integration`（`_class: lead`），deck 由 14 頁變 **15 頁**。
+放在契約頁之後而不是之前，是因為契約頁是 A 交給 B 的交接，講完才知道 B 收到什麼。
+
+---
 **注意**：`project/slides/assets/*.png` **不走 Git LFS**（普通 binary，約 50–100 KB），
 所以 `git lfs install` 沒裝的人也能正常 render 簡報。
 
@@ -755,6 +761,7 @@ N=26 只收成功校正樣本，有選擇偏差，不能當整體準確率。
 **口徑限制**：整圖入口是現場 demo 路徑，不應混入 §9 的 26 組上限量測。
 三組報告口徑仍分開：99 張原圖 end-to-end 39.4%、95 張 stages 融合 41.1%、
 26 組 rectified_auto 融合 69.2%。
+
 
 
 
