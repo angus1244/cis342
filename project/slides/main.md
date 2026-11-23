@@ -260,6 +260,24 @@ Hong Kong plates use a stroke weight, aspect ratio and surface texture that no a
 - **Geometry pays more** - 57.7% to 69.2% once GEO-01 replaced a plain resize
 - **The upper bound** - 7/7 clean crops; the gap to 39.4% is localisation, not OCR
 
+<!--
+Q&A guard - do not volunteer this, only answer if asked.
+
+Likely question: the A-line slide says 21 of 99 stop at the 0.60 gate, so 78
+crops reach us. Why does this slide say 95?
+
+Answer: the 95-crop set was measured before the colour-mask ladder was added.
+The ladder changed candidate scores, so the pipeline now produces 78 crops and
+the other 17 are no longer generated - all 17 score 0.457 to 0.597, below the
+0.60 gate, and none of them reads correctly.
+
+Re-measured on the 78 crops the current pipeline actually produces:
+two-path fusion 48.7% (38/78), own split only 39.7% (31/78), so fusion is worth
++9.0 points rather than +7.4. CER drops from 0.482 to 0.385.
+
+The 26-crop and 7/7 numbers are unaffected - they are a different denominator.
+-->
+
 ---
 
 ## Most errors are characters we never saw
