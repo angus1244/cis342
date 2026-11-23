@@ -1,3 +1,54 @@
+## 2026-11-23 — 修掉 Colab 上的三個「靜默降級」（新增 `[S0-5]`、改寫 `[D1-06]` self test）
+
+**摘要**：Colab 那份跑完 40 個 code cell、0 個 error，但**評估數字全是假的**。
+`[EV]` 印出「N=5 整牌正確 100.0%」，實際上是 `gt=""` 對 `pred=""` 的空字串自我相等。
+修正 `notebooks/lpr_dev.ipynb`（69 → 70 cells）並重新產生 Colab 副本。
+
+**為什麼要做**：使用者把 Colab 跑完的輸出版本下載回來核對，發現三個缺口都不會讓
+Run All 失敗，只會讓結果看起來「很好」：
+
+| 缺口 | 現象 | 連鎖後果 |
+|---|---|---|
+| `easyocr` 未安裝 | `[OCR-02] EasyOCR 不可用: ModuleNotFoundError` | 每張都回空字串，**不報錯** |
+| `data/labels.csv` text 全空 | `[D1-02]` 先建 100 列空白骨架 → `[D1-06]` 見檔案已存在就跳過下載 | `[INT-01]` 的 `only_labelled` 濾掉全部 100 列 → A 段完成 **0/0** 張 |
+| `shared/rectified_auto/` 不存在 | `[INT-02]` 三個候選路徑全部 miss | §8/§9 悄悄退化成「前 5 張」評估 |
+
+串起來就是：`labels.csv` 無 GT → A 段 0 張 → `[EV]` `end2end=0/0` → 退化成
+`gt` 與 `pred` 都空字串 → 假 100%。
+
+**好消息**：Colab 抽樣到的 100 張影像與本機**完全相同**（`train_IMG_1231` /
+`1245` / `4540` / `4553` / `4573`…，指紋 `bd1a4489`）。所以版本差異（Python
+3.13.18 vs 3.12.10）確實不影響結果，問題純粹是環境缺少東西。
+
+**改動內容**
+
+1. **新增 `[S0-5]`（cell 14，插在 `[S0-4]` self test 之後）**
+   `Colab 環境就緒：缺什麼補什麼（本機執行時整格 no-op）`
+   - `_colab_ensure_easyocr()`：try import → `pip install -q easyocr` → 再 try
+   - `_colab_ensure_rectified_auto()`：`apt-get install git-lfs` → `git lfs install --skip-repo`
+     → `git clone --depth 1` → `git lfs pull -I "project/shared/rectified_auto"`
+     → `copytree` 到 `/content/shared/rectified_auto`
+   - 主體 `if not IN_COLAB: print('本機環境，跳過')`
+   - 設計原則：**只補環境，不動資料**。labels.csv 的修法屬 `[D1-06]` 的職責。
+
+2. **改寫 `[D1-06]` self test（cell 35）**
+   新增 `_filled_text_count(df)`；若「有列數但 text 全空」就判定為骨架，
+   `download_labels(force=True)` 強制重抓，並印出 `筆數 | 已填 text`。
+   本機行為不變（99/100 已填 → `force=False`，不會重抓）。
+
+**為什麼放在 `[S0-5]` 而不是 `[OCR-02]` 裡面**：`[S0-5]` 在 §0 就跑完，
+後面所有 import 都吃到已補好的環境；若塞進 `[OCR-02]`，它會在 §7 才 `pip install`，
+而該格之後的 torch/easyocr 已經 import 失敗過了。放在最前面也讓「有沒有補」一眼可見。
+
+**驗證**
+- 本機 `nbconvert --execute`：70 cells / 41 code / **0 error**，耗時 1.6 分
+- `[S0-5]` 輸出：`[S0-5] 本機環境，跳過 Colab 就緒檢查`
+- `[D1-06]` 輸出：`目前 labels.csv 筆數: 100 | 已填 text: 99`、指紋 `bd1a4489`
+- `debug/sync_colab.py` 重產：Colab cells 70、outputs 0
+
+**更正上一則紀錄**：原本寫「cell 52 有 `%pip install easyocr`」是錯的，
+cell 52 是 markdown，那段只是 fenced code block。已在該則加註更正。
+
 ## 2026-11-22 22:55 — 新增 requirements.txt 與 setup_env.ps1（離線交付環境）
 
 **摘要**：為 12/18 遞交與 11/24 presentation 加上「不依賴 Google Colab」的執行路徑。
@@ -7,9 +58,14 @@
 **為什麼要做**：Colab 是 Python 3.13.18，本機是 3.12.10，且 Colab 的
 `google-colab` / `numba` / `gradio` 分別把 pandas 鎖在 2.2.3、numpy <2.5、pillow <13。
 硬把 Colab 對齊本機版本會打破 Colab 自身的相依鏈（實測三條衝突）。
-既然 notebook 在原生 Colab 上本來就能跑（cell 52 有 `%pip install easyocr`、
-cell 54 用 `try/except` 包住 `import torch` / `import easyocr`），
-就不該為了「版本號一致」去動宿主環境。改為提供一條本機可重現的路徑。
+既然 notebook 在原生 Colab 上本來就能跑，就不該為了「版本號一致」去動宿主環境。
+改為提供一條本機可重現的路徑。
+
+> **2026-11-23 更正**：上面原本寫「cell 52 有 `%pip install easyocr`」是**錯的**——
+> cell 52 是 markdown，那段只是 fenced code block，永遠不會執行。實測 Colab 上
+> `easyocr` 根本沒裝（`[OCR-02] EasyOCR 不可用: ModuleNotFoundError`）。
+> 真正讓 Run All 不報錯的是 cell 54 的 `try/except`，代價是**靜默退化成空結果**。
+> 已於 `[S0-5]` 補上安裝步驟，詳見 2026-11-23 条目。
 
 **為什麼不把 venv 放進 git**：實測 `.venv` 是 **1437.8 MB / 51,632 個檔案**，
 而 `.git` 本身已 1045.3 MB。GitHub 單檔上限 100 MB、repo 軟上限 1 GB；
