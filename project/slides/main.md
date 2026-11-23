@@ -42,7 +42,7 @@ style: |
 
 ## CIS342 Course Project - Group 6
 
-### B-line: OCR, post-processing and integration
+### A-line: image to a rectified crop  ·  B-line: OCR and post-processing
 
 ---
 <!-- _class: lead -->

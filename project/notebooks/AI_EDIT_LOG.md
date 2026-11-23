@@ -48,6 +48,12 @@ A 線只有一個 `TODO(nok)` placeholder。這批必須在今晚完成。
 **驗證**：`npx @marp-team/marp-cli main.md --allow-local-files --images png`
 渲染 14 張圖，逐張目視確認無溢出、footer 未被遮蓋。
 
+**追加（14:59）**：封面第三行原本是 `### B-line: OCR, post-processing and integration`，
+是隊友建立骨架時只寫 B 線留下的。deck 現在先講 A 後講 B，封面卻只寫 B-line，
+台上第一句就與標題對不上，因此改為
+`### A-line: image to a rectified crop  ·  B-line: OCR and post-processing`。
+
+---
 **注意**：`project/slides/assets/*.png` **不走 Git LFS**（普通 binary，約 50–100 KB），
 所以 `git lfs install` 沒裝的人也能正常 render 簡報。
 
@@ -749,6 +755,7 @@ N=26 只收成功校正樣本，有選擇偏差，不能當整體準確率。
 **口徑限制**：整圖入口是現場 demo 路徑，不應混入 §9 的 26 組上限量測。
 三組報告口徑仍分開：99 張原圖 end-to-end 39.4%、95 張 stages 融合 41.1%、
 26 組 rectified_auto 融合 69.2%。
+
 
 
 
