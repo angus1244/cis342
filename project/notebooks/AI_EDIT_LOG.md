@@ -1,3 +1,57 @@
+## 2026-11-23 — 補完 A 線 Marp 簡報六頁（`slides/main.md` 第 3–8 頁 + 6 張實跑插圖）
+
+**摘要**：`project/slides/main.md` 從 8 頁長到 **14 頁**（封面 1 + A 線分隔 1 + A 線 6 + 共用契約 1 + B 線 5）。所有數字都是**重跑
+notebook 函式量出來的**，沒有一項沿用舊稿。
+
+**為什麼要做**：使用者與隊友 11-24 13:00 要上台，隊友的 agent 已完成 B 線，
+A 線只有一個 `TODO(nok)` placeholder。這批必須在今晚完成。
+
+**A 線六頁與各自的唯一論點**
+
+| 頁 | 標題 | 論點 |
+|---|---|---|
+| 3 | 100 plates, no plate strings in the source | 資料集只有框、沒有字串，文字是手打的 |
+| 4 | Localisation is a proposal step, not a detector | `localize()` 回前 5 個候選，不是單一答案 |
+| 5 | Where the locator stands | recall@1 51.5% / recall@5 60.6%，分佈是雙峰 |
+| 6 | Extraction answers "which pixels", not "where" | `segment()` 的真正輸出是 mask，不是裁切圖 |
+| 7 | Rectification: fit four edges, not one rotated box | `minAreaRect` 無法表達梯形，所以逐邊擬合 |
+| 8 | The ceiling is localisation, not recognition | IoU<0.5 只有 8.3%，OCR 再好也救不回來 |
+
+**為什麼是 6 頁而不是原本說的 5 頁**：使用者在表單中同意「5 頁 + 一頁未來方向」，
+所以第 8 頁（`The ceiling is localisation`）同時是「發現」與「下一步」，
+不另開一頁講 YOLO/CNN，避免與 12/18 的最終版承諾綁死。
+
+**為什麼重測而不是抄舊稿**：舊稿散落在 markdown 與先前的口頭討論裡，彼此不一致
+（例如定位 recall 曾寫 49.0%、59.0%、0.487，與 notebook 的 51.5%、60.6%、0.504 不符）。
+原因是我第一次自寫腳本漏了 `preprocess()` 與 `[D1-03]` 的 `_parse_bbox`。
+改用 notebook self test 的同一條路徑後數字才對上，於是全部重算並存成
+`debug/prep_ious.csv`（99 列）與 `debug/ceiling.csv`（95 列）。
+
+**圖片素材的兩個陷阱（已修）**
+
+1. `shared/stages/<stem>_05_rectify_mask.png` 是**校正後** 480×140 的遮罩，
+   不是擷取階段的遮罩。要畫 SEG 那頁必須現場呼叫 `segment(img, quad)`，
+   否則會拿錯階段的圖去示範「擷取」。
+2. `_gt_quad_from_label()` 回傳的是原圖座標，沒有乘上 `MAX_SIDE` 的縮放；
+   與 `localize()` 的輸出比 IoU 前必須自己乘 `min(1, MAX_SIDE/max(h, w))`。
+   另外 `localize()` 的 `_iou_quad` 是**軸對齊外包框** IoU，不是多邊形 IoU。
+
+**排版修正（渲染驗證後才發現）**
+
+- `marp-cli` **必須加 `--allow-local-files`**，否則所有本地圖片靜默變成空白。
+- `Marp` 的 `section` 是 grid 容器，垂直置中靠 `align-content: center`，
+  `justify-content` 改不動它。已在 `style:` 段加 `align-content: start`
+  讓所有內容頁齊頂，`.lead` 另外覆寫回 `center`。
+- 圖片寬度上限（1280×720、25px 字級實測）：實拍對照 `w:790`、圖表 `w:960`、
+  九宮格 `w:880`。超過就會把最後一條 bullet 推進 footer。
+
+**驗證**：`npx @marp-team/marp-cli main.md --allow-local-files --images png`
+渲染 14 張圖，逐張目視確認無溢出、footer 未被遮蓋。
+
+**注意**：`project/slides/assets/*.png` **不走 Git LFS**（普通 binary，約 50–100 KB），
+所以 `git lfs install` 沒裝的人也能正常 render 簡報。
+
+---
 ## 2026-11-23 — 修掉 Colab 上的三個「靜默降級」（新增 `[S0-5]`、改寫 `[D1-06]` self test）
 
 **摘要**：Colab 那份跑完 40 個 code cell、0 個 error，但**評估數字全是假的**。
@@ -695,4 +749,6 @@ N=26 只收成功校正樣本，有選擇偏差，不能當整體準確率。
 **口徑限制**：整圖入口是現場 demo 路徑，不應混入 §9 的 26 組上限量測。
 三組報告口徑仍分開：99 張原圖 end-to-end 39.4%、95 張 stages 融合 41.1%、
 26 組 rectified_auto 融合 69.2%。
+
+
 
